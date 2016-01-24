@@ -6,7 +6,11 @@
 #include <OgreViewport.h>
 #include <OgreEntity.h>
 #include <OgreWindowEventUtilities.h>
- 
+
+#include <iostream>
+
+using namespace Ogre;
+
 App::App()
    : ResourcesCfg(Ogre::StringUtil::BLANK)
    , PluginsCfg(Ogre::StringUtil::BLANK)
@@ -17,7 +21,14 @@ App::~App()
 {
    Ogre::WindowEventUtilities::removeWindowEventListener(Window, this);
    windowClosed(Window);
+   
+   for (size_t i=0; i<Width*Height*Depth; i++)
+      if (Meshes[i])
+         SceneMgr->destroyManualObject(Meshes[i]);
+   
+   delete [] Meshes;
    delete Root;
+   delete Model_;
 }
 
 //Adjust mouse clipping area
@@ -60,6 +71,21 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
  
     if(Keyboard->isKeyDown(OIS::KC_ESCAPE))
         return false;
+
+
+    PlayerNode->yaw(Degree(-Mouse->getMouseState().X.rel*0.1), Node::TS_WORLD);
+    PlayerNode->pitch(Degree(-Mouse->getMouseState().Y.rel*0.1), Node::TS_LOCAL);
+    
+    if (Keyboard->isKeyDown(OIS::KC_Z) and not Keyboard->isKeyDown(OIS::KC_S))
+       PlayerNode->translate(0,0,-1,Ogre::Node::TS_LOCAL);
+    else if (Keyboard->isKeyDown(OIS::KC_S) and not Keyboard->isKeyDown(OIS::KC_Z))
+       PlayerNode->translate(0,0,1,Ogre::Node::TS_LOCAL);
+
+    if (Keyboard->isKeyDown(OIS::KC_Q) and not Keyboard->isKeyDown(OIS::KC_D))
+       PlayerNode->translate(-1,0,0,Ogre::Node::TS_LOCAL);
+    else if (Keyboard->isKeyDown(OIS::KC_D) and not Keyboard->isKeyDown(OIS::KC_Q))
+       PlayerNode->translate(1,0,0,Ogre::Node::TS_LOCAL);
+
  
     return true;
 }
@@ -70,6 +96,14 @@ bool App::Go()
    PluginsCfg   = "plugins.cfg";
    Root = new Ogre::Root(PluginsCfg);
 
+   MeshSize = 10;
+   Width = Height = Depth = 90;
+   Model_ = new Model(MeshSize, Width, Height, Depth, this);
+   
+   Meshes = new Ogre::ManualObject*[Width*Height*Depth];
+   for (size_t i=0; i<Width*Height*Depth; i++)
+      Meshes[i] = nullptr;
+   
    Ogre::ConfigFile cf;
    cf.load(ResourcesCfg);
 
@@ -90,17 +124,16 @@ bool App::Go()
    if(!(Root->restoreConfig() || Root->showConfigDialog()))
       return false;
 
-   Window = Root->initialise(true, "TutorialApplication Render Window");
+   Window = Root->initialise(true, "voxel-shooter");
 
    Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
    Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 
    SceneMgr = Root->createSceneManager(Ogre::ST_GENERIC);
 
-   Camera = SceneMgr->createCamera("MainCam");
+   Camera = SceneMgr->createCamera("PlayerCam");
  
-   Camera->setPosition(0, 0, 80);
-   Camera->lookAt(0, 0, -300);
+   Camera->setDirection(0, 0, -1);
    Camera->setNearClipDistance(5);
 
    Ogre::Viewport* vp = Window->addViewport(Camera);
@@ -112,16 +145,25 @@ bool App::Go()
       Ogre::Real(vp->getActualHeight()));
 
 
+   PlayerNode = SceneMgr->getRootSceneNode()->createChildSceneNode();
+   PlayerNode->setPosition(0,0,0);
+   PlayerNode->attachObject(Camera);
+
+   PlayerDirection = Ogre::Vector3(0,0,-1);
+   PlayerPos = Ogre::Vector3(0,0,0);
+
+   Ogre::Light* light = SceneMgr->createLight("PlayerLight");
+   PlayerNode->attachObject(light);
+
+   //Model_->MovePlayer(0,0,0); // Update PlayerNode
+   
    Ogre::Entity* ogreEntity = SceneMgr->createEntity("ogrehead.mesh");
  
    Ogre::SceneNode* ogreNode = SceneMgr->getRootSceneNode()->createChildSceneNode();
    ogreNode->attachObject(ogreEntity);
+   ogreNode->setPosition(0,0,-40);
  
-   SceneMgr->setAmbientLight(Ogre::ColourValue(.5, .5, .5));
- 
-   Ogre::Light* light = SceneMgr->createLight("MainLight");
-   light->setPosition(20, 80, 50);
-
+   SceneMgr->setAmbientLight(Ogre::ColourValue(.3, .3, .3));
    
    Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
    OIS::ParamList pl;
@@ -142,6 +184,21 @@ bool App::Go()
    
    return true;
 }
+
+void App::UpdatePlayer(const Model::Player & p)
+{
+   //PlayerNode->setPosition(p.Pos.X, p.Pos.Y, p.Pos.Z);
+
+   //Model::Vec3 dir = Model::toCartesian(p.Theta,p.Phi);
+   //PlayerNode->setDirection(dir.X,dir.Y,dir.Z, Ogre::Node::TransformSpace::TS_WORLD);
+
+   //PlayerNode->setDirection(PlayerDirection, Ogre::Node::TransformSpace::TS_WORLD);
+}
+
+void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad> &)
+{
+}
+
 
 
 int main()

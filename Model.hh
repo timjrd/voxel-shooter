@@ -12,7 +12,7 @@ T between(T a, T x, T b) {
 
 class Model
 {
-public:
+public:   
    struct Vec3
    {
       float X;
@@ -26,8 +26,14 @@ public:
    struct Player
    {
       Vec3 Pos;
-      float Roll; // longitude
-      float Yaw;  // colatitude
+
+      float Theta;
+      float Phi;
+      // coordonnées sphériques
+      // on n'utilise pas la convention mathématique :
+      // X -> Z
+      // Y -> X
+      // Z -> Y
    };
    struct Quad
    {
@@ -39,9 +45,18 @@ public:
       Vec3 Normal;
    };
 
+   class Observer
+   {
+   public:
+      virtual void UpdatePlayer(const Player &) {};
+      virtual void UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Quad> &) {};
+   };
+   
    static Vec3 toCartesian(float roll, float yaw);
    
 private:
+   Observer * Observer_ = nullptr;
+   
    bool * Voxels = nullptr;
    size_t Width  = 0;
    size_t Height = 0;
@@ -49,17 +64,18 @@ private:
    
    size_t MeshSize = 0;
 
-   Player Player;
+   Player Player_;
    float PlayerSpeed  = 10; // unit/second
    float PlayerRadius = 2;
-
-public:
-   Model(size_t meshSize, size_t width, size_t height, size_t depth);
-   ~Model();
 
    bool & At(size_t x, size_t y, size_t z);
    void SetSphere(float x, float y, float z, float r, bool b);
    void SetSphere(Vec3 pos, float r, bool b);
+   
+public:
+   Model(size_t meshSize, size_t width, size_t height, size_t depth, Observer * observer);
+   ~Model();
+
    void PlayerFill();
    void PlayerEmpty();
 
@@ -74,5 +90,4 @@ public:
    void MovePlayerBackward(float time);
    void MovePlayerUp(float time);
    void MovePlayerDown(float time);
-
 };
