@@ -45,6 +45,7 @@ public:
 
    bool & At(size_t x, size_t y, size_t z);
    void SetSphere(float x, float y, float z, float r, bool b);
+   void SetSphere(Ogre::Vector3 pos, float r, bool b);
 
    void ExtractMesh(size_t x, size_t y, size_t z, std::vector<Quad> & res);
 };

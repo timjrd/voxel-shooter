@@ -26,6 +26,9 @@ bool & VoxelContainer::At(size_t x, size_t y, size_t z)
    return Voxels[z*Width*Height + y*Width + x];
 }
 
+void VoxelContainer::SetSphere(Ogre::Vector3 pos, float r, bool b) {
+   SetSphere(pos.x, pos.y, pos.z, r, b);
+}
 void VoxelContainer::SetSphere(float sx, float sy, float sz, float r, bool b)
 {
    const int fromX = between(0, (int) (sx-r-1), ((int)Width)-1);

@@ -80,6 +80,13 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
     const Radian newPitch = Ogre::Math::Abs(PlayerNode->getOrientation().getPitch() + d);
     if(newPitch <= Ogre::Radian(Ogre::Math::PI/2))
        PlayerNode->pitch(d, Node::TS_LOCAL);
+
+
+    if (Mouse->getMouseState().buttonDown(OIS::MB_Left))
+       Voxels->SetSphere(AlterNode->_getDerivedPosition(), 6, true);
+    else if (Mouse->getMouseState().buttonDown(OIS::MB_Right))
+       Voxels->SetSphere(AlterNode->_getDerivedPosition(), 6, false);
+    
     
     if (Keyboard->isKeyDown(OIS::KC_Z) and not Keyboard->isKeyDown(OIS::KC_S))
        YawNode->translate(0,0,-1,Ogre::Node::TS_LOCAL);
@@ -97,6 +104,7 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
        YawNode->translate(0,-1,0,Ogre::Node::TS_LOCAL);
 
 
+    
  
     return true;
 }
@@ -107,6 +115,8 @@ bool App::Go()
    PluginsCfg   = "plugins.cfg";
    Root = new Ogre::Root(PluginsCfg);
 
+   PlayerRadius = 3;
+   
    MeshSize = 10;
    Width = Height = Depth = 90;
    Voxels = new VoxelContainer(MeshSize, Width, Height, Depth, this);
@@ -145,7 +155,7 @@ bool App::Go()
    Camera = SceneMgr->createCamera("PlayerCam");
  
    Camera->setDirection(0, 0, -1);
-   Camera->setNearClipDistance(5);
+   Camera->setNearClipDistance(0.1);
 
    Ogre::Viewport* vp = Window->addViewport(Camera);
  
@@ -157,15 +167,20 @@ bool App::Go()
 
 
    YawNode = SceneMgr->getRootSceneNode()->createChildSceneNode();
-   YawNode->setPosition(300,300,300);
 
    PlayerNode = YawNode->createChildSceneNode();
    PlayerNode->attachObject(Camera);
 
+   AlterNode = PlayerNode->createChildSceneNode();
+   AlterNode->setPosition(0,0,-50);
+   
    Ogre::Light* light = SceneMgr->createLight("PlayerLight");
    //light->setPosition(300,300,300);
    PlayerNode->attachObject(light);
 
+
+   YawNode->setPosition(300,300,300);
+   
 
    const float w = Width * MeshSize;
    const float h = Height * MeshSize;
@@ -357,7 +372,10 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContai
    if (quads.empty())
    {
       if (mesh)
+      {
          SceneMgr->destroyManualObject(mesh);
+         mesh = nullptr;
+      }
          
       return;
    }

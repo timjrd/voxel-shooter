@@ -27,11 +27,10 @@ class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public
    Ogre::SceneManager* SceneMgr = nullptr;
    Ogre::Camera* Camera = nullptr;
 
+   float PlayerRadius;
    Ogre::SceneNode * PlayerNode = nullptr;
    Ogre::SceneNode * YawNode = nullptr;
-
-   Ogre::Vector3 PlayerDirection;
-   Ogre::Vector3 PlayerPos;
+   Ogre::SceneNode * AlterNode = nullptr;
 
    OIS::InputManager* InputManager = nullptr;
    OIS::Mouse* Mouse = nullptr;
