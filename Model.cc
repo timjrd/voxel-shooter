@@ -4,28 +4,8 @@
 
 using namespace std;
 
-Model::Vec3 Model::Vec3::operator+(const Vec3 & a) const {
-   return {X+a.X, Y+a.Y, Z+a.Z};
-}
-void Model::Vec3::operator+=(const Vec3 & a) {
-   X += a.X;
-   Y += a.Y;
-   Z += a.Z;
-}
-Model::Vec3 Model::Vec3::operator*(const float a) const {
-   return {X*a, Y*a, Z*a};
-}
-
-Model::Vec3 Model::toCartesian(float theta, float phi)
-{
-   return { sin(phi) * sin(theta),
-            cos(phi),
-            sin(phi) * cos(theta)
-         };
-}
-
-Model::Model(size_t meshSize, size_t width, size_t height, size_t depth, Observer * observer)
-   : Observer_(observer)
+VoxelContainer::VoxelContainer(size_t meshSize, size_t width, size_t height, size_t depth, MeshListener * listener)
+   : Listener(listener)
    , Width(meshSize*width)
    , Height(meshSize*height)
    , Depth(meshSize*depth)
@@ -34,23 +14,19 @@ Model::Model(size_t meshSize, size_t width, size_t height, size_t depth, Observe
    Voxels = new bool[Width*Height*Depth];
    for (size_t i=0; i<Width*Height*Depth; i++)
       Voxels[i] = false;
-
-   Player_.Pos = {0,0};// {Width/2.f, Height/2.f, Depth/2.f};
-   Player_.Theta = 0;
-   Player_.Phi   = -PI/2;
 }
 
-Model::~Model()
+VoxelContainer::~VoxelContainer()
 {
    delete [] Voxels;
 }
 
-bool & Model::At(size_t x, size_t y, size_t z)
+bool & VoxelContainer::At(size_t x, size_t y, size_t z)
 {
    return Voxels[z*Width*Height + y*Width + x];
 }
 
-void Model::SetSphere(float sx, float sy, float sz, float r, bool b)
+void VoxelContainer::SetSphere(float sx, float sy, float sz, float r, bool b)
 {
    const int fromX = between(0, (int) (sx-r-1), ((int)Width)-1);
    const int fromY = between(0, (int) (sy-r-1), ((int)Height)-1);
@@ -60,6 +36,10 @@ void Model::SetSphere(float sx, float sy, float sz, float r, bool b)
    const int toY = between(0, (int) (sy+r+1), ((int)Height)-1);
    const int toZ = between(0, (int) (sz+r+1), ((int)Depth)-1);
 
+   std::cout << "\n" << std::endl;
+   
+   std::cout << "SetSphere: " << fromX << "," << fromY << "," << fromZ << std::endl;
+   
    for (int x=fromX; x<=toX; x++)
       for (int y=fromY; y<=toY; y++)
          for (int z=fromZ; z<=toZ; z++)
@@ -67,38 +47,33 @@ void Model::SetSphere(float sx, float sy, float sz, float r, bool b)
             const float dx = x+0.5 - sx;
             const float dy = y+0.5 - sy;
             const float dz = z+0.5 - sz;
-            const float d = sqrt(sx*sx + sy*sy + sz*sz);
+            const float d = sqrt(dx*dx + dy*dy + dz*dz);
 
-            At(x,y,z) = d <= r;
+            if (d <= r)
+            {
+               At(x,y,z) = b;
+               //std::cout << "set sphere voxel !" << std::endl;
+            }
+
          }
 
-   if (Observer_)
+   if (Listener)
       for (int x=fromX/MeshSize; x<=toX/MeshSize; x++)
          for (int y=fromY/MeshSize; y<=toY/MeshSize; y++)
             for (int z=fromZ/MeshSize; z<=toZ/MeshSize; z++)
             {
+               std::cout << "UpdateMesh !" << std::endl;
                vector<Quad> mesh;
                ExtractMesh(x,y,z,mesh);
-               Observer_->UpdateMesh(x,y,z,mesh);
+               Listener->UpdateMesh(x,y,z,mesh);
             }
 }
-void Model::SetSphere(Vec3 pos, float r, bool b) {
-   SetSphere(pos.X, pos.Y, pos.Z, r, b);
-}
 
-void Model::PlayerFill() {
-   SetSphere(Player_.Pos + toCartesian(Player_.Theta,Player_.Phi) * 18, 6, true);
-}
-void Model::PlayerEmpty() {
-   SetSphere(Player_.Pos + toCartesian(Player_.Theta,Player_.Phi) * 18, 6, false);
-}
-
-
-void Model::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Quad> & res)
+void VoxelContainer::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Quad> & res)
 {
    for(size_t x=mx*MeshSize; x < mx*MeshSize+MeshSize; x++)
       for(size_t y=my*MeshSize; y < my*MeshSize+MeshSize; y++)
-         for(size_t z=mx*MeshSize; z < mz*MeshSize+MeshSize; z++)
+         for(size_t z=mz*MeshSize; z < mz*MeshSize+MeshSize; z++)
             if (At(x,y,z))
             {
                if (x>0 and not At(x-1,y,z)) {
@@ -157,48 +132,3 @@ void Model::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Quad> & res
             }
 }
 
-
-
-
-void Model::MovePlayer(float theta, float phi, float time)
-{
-   const float theta_ = Player_.Theta + theta;
-   const float phi_   = Player_.Phi   + phi;
-
-   Player_.Pos += toCartesian(theta_, phi_) * time*PlayerSpeed;
-
-   if (Observer_)
-      Observer_->UpdatePlayer(Player_);
-}
-
-void Model::RotatePlayer(float theta, float phi)
-{
-   float _;
-   Player_.Theta = modf((Player_.Theta + theta)/(2*PI), &_)*2*PI;
-   Player_.Phi   = modf((Player_.Phi + phi)/(2*PI), &_)*2*PI;
-
-   //Player_.Theta += theta;
-   //Player_.Phi   += phi;
-   
-   if (Observer_)
-      Observer_->UpdatePlayer(Player_);
-}
-
-void Model::MovePlayerLeft(float time) {
-   MovePlayer(PI/2, 0, time);
-}
-void Model::MovePlayerRight(float time) {
-   MovePlayer(-PI/2, 0, time);
-}
-void Model::MovePlayerForward(float time) {
-   MovePlayer(0, 0, time);
-}
-void Model::MovePlayerBackward(float time) {
-   MovePlayer(0, PI, time);
-}
-void Model::MovePlayerUp(float time) {
-   MovePlayer(0, -PI/2, time);
-}
-void Model::MovePlayerDown(float time) {
-   MovePlayer(0, PI/2, time);
-}
