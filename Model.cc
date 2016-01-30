@@ -31,13 +31,13 @@ void VoxelContainer::SetSphere(Ogre::Vector3 pos, float r, bool b) {
 }
 void VoxelContainer::SetSphere(float sx, float sy, float sz, float r, bool b)
 {
-   const int fromX = between(0, (int) (sx-r-1), ((int)Width)-1);
-   const int fromY = between(0, (int) (sy-r-1), ((int)Height)-1);
-   const int fromZ = between(0, (int) (sz-r-1), ((int)Depth)-1);
+   const int fromX = between(0, (int) (sx-r), ((int)Width)-1);
+   const int fromY = between(0, (int) (sy-r), ((int)Height)-1);
+   const int fromZ = between(0, (int) (sz-r), ((int)Depth)-1);
 
-   const int toX = between(0, (int) (sx+r+1), ((int)Width)-1);
-   const int toY = between(0, (int) (sy+r+1), ((int)Height)-1);
-   const int toZ = between(0, (int) (sz+r+1), ((int)Depth)-1);
+   const int toX = between(0, (int) (sx+r), ((int)Width)-1);
+   const int toY = between(0, (int) (sy+r), ((int)Height)-1);
+   const int toZ = between(0, (int) (sz+r), ((int)Depth)-1);
 
    std::cout << "\n" << std::endl;
    
@@ -135,3 +135,39 @@ void VoxelContainer::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Qu
             }
 }
 
+
+bool VoxelContainer::BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max)
+{
+   const int fromX = between(0, (int) min.x, ((int)Width)-1);
+   const int fromY = between(0, (int) min.y, ((int)Height)-1);
+   const int fromZ = between(0, (int) min.z, ((int)Depth)-1);
+
+   const int toX = between(0, (int) max.x, ((int)Width)-1);
+   const int toY = between(0, (int) max.y, ((int)Height)-1);
+   const int toZ = between(0, (int) max.z, ((int)Depth)-1);
+
+   for (int x=fromX; x<=toX; x++)
+      for (int y=fromY; y<=toY; y++)
+         for (int z=fromZ; z<=toZ; z++)
+            if ( At(x,y,z)
+                 and min.x < x+1 and max.x > x
+                 and min.y < y+1 and max.y > y
+                 and min.z < z+1 and max.z > z )
+               return true;
+
+   return false;
+}
+
+bool VoxelContainer::PointIntersects(Ogre::Vector3 pos)
+{
+   const int x = pos.x;
+   const int y = pos.y;
+   const int z = pos.z;
+
+   if ( x < 0 or x > Width-1
+        or y < 0 or y > Height-1
+        or z < 0 or z > Depth-1 )
+      return false;
+
+   else return At(x,y,z);
+}

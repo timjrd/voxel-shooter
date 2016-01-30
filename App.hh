@@ -42,6 +42,9 @@ class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public
    void windowResized(Ogre::RenderWindow* rw) override;
    void windowClosed(Ogre::RenderWindow* rw)  override;
    bool frameRenderingQueued(const Ogre::FrameEvent& evt) override;
+
+
+   void Translate(Ogre::Vector3);
    
   public:
    App();

@@ -47,5 +47,8 @@ public:
    void SetSphere(float x, float y, float z, float r, bool b);
    void SetSphere(Ogre::Vector3 pos, float r, bool b);
 
+   bool BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max);
+   bool PointIntersects(Ogre::Vector3 pos);
+   
    void ExtractMesh(size_t x, size_t y, size_t z, std::vector<Quad> & res);
 };

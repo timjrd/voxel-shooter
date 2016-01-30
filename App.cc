@@ -87,27 +87,70 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
     else if (Mouse->getMouseState().buttonDown(OIS::MB_Right))
        Voxels->SetSphere(AlterNode->_getDerivedPosition(), 6, false);
     
-    
+
+    Vector3 translate(0,0,0);
     if (Keyboard->isKeyDown(OIS::KC_Z) and not Keyboard->isKeyDown(OIS::KC_S))
-       YawNode->translate(0,0,-1,Ogre::Node::TS_LOCAL);
+       translate.z = -1;
     else if (Keyboard->isKeyDown(OIS::KC_S) and not Keyboard->isKeyDown(OIS::KC_Z))
-       YawNode->translate(0,0,1,Ogre::Node::TS_LOCAL);
+       translate.z = 1;
 
     if (Keyboard->isKeyDown(OIS::KC_Q) and not Keyboard->isKeyDown(OIS::KC_D))
-       YawNode->translate(-1,0,0,Ogre::Node::TS_LOCAL);
+       translate.x = -1;
     else if (Keyboard->isKeyDown(OIS::KC_D) and not Keyboard->isKeyDown(OIS::KC_Q))
-       YawNode->translate(1,0,0,Ogre::Node::TS_LOCAL);
+       translate.x = 1;
 
     if (Keyboard->isKeyDown(OIS::KC_SPACE) and not Keyboard->isKeyDown(OIS::KC_LSHIFT))
-       YawNode->translate(0,1,0,Ogre::Node::TS_LOCAL);
+       translate.y = 1;
     else if (Keyboard->isKeyDown(OIS::KC_LSHIFT) and not Keyboard->isKeyDown(OIS::KC_SPACE))
-       YawNode->translate(0,-1,0,Ogre::Node::TS_LOCAL);
+       translate.y = -1;
 
-
+    Translate(translate);
     
- 
     return true;
 }
+
+void App::Translate(Vector3 dir)
+{
+   const Vector3 d(PlayerRadius, PlayerRadius, PlayerRadius);
+
+   const Vector3 t = YawNode->getOrientation() * dir;
+
+   const Vector3 pos = PlayerNode->_getDerivedPosition();
+
+   //YawNode->setPosition(pos+t); return;
+
+   // le bout de code qui suit c'est soit du génie soit une immonde atrocité, en tout cas ça marche ^^
+   const Vector3 ___ = pos;
+   const Vector3 __z = pos + Vector3(0  , 0  , t.z);
+   const Vector3 _y_ = pos + Vector3(0  , t.y, 0  );
+   const Vector3 _yz = pos + Vector3(0  , t.y, t.z);
+   const Vector3 x__ = pos + Vector3(t.x, 0  , 0  );
+   const Vector3 x_z = pos + Vector3(t.x, 0  , t.z);
+   const Vector3 xy_ = pos + Vector3(t.x, t.y, 0  );
+   const Vector3 xyz = pos + t;
+   
+   if (not Voxels->BoxIntersects(xyz - d, xyz + d))
+      YawNode->setPosition(xyz);
+
+   else if (not Voxels->BoxIntersects(x_z - d, x_z + d))
+      YawNode->setPosition(x_z);
+
+   else if (not Voxels->BoxIntersects(_yz - d, _yz + d))
+      YawNode->setPosition(_yz);
+
+   else if (not Voxels->BoxIntersects(xy_ - d, xy_ + d))
+      YawNode->setPosition(xy_);
+
+   else if (not Voxels->BoxIntersects(__z - d, __z + d))
+      YawNode->setPosition(__z);
+
+   else if (not Voxels->BoxIntersects(x__ - d, x__ + d))
+      YawNode->setPosition(x__);
+
+   else if (not Voxels->BoxIntersects(_y_ - d, _y_ + d))
+      YawNode->setPosition(_y_);
+}
+
 
 bool App::Go()
 {
@@ -117,8 +160,8 @@ bool App::Go()
 
    PlayerRadius = 3;
    
-   MeshSize = 10;
-   Width = Height = Depth = 90;
+   MeshSize = 30;
+   Width = Height = Depth = 30;
    Voxels = new VoxelContainer(MeshSize, Width, Height, Depth, this);
    
    Meshes = new Ogre::ManualObject*[Width*Height*Depth];
@@ -172,7 +215,7 @@ bool App::Go()
    PlayerNode->attachObject(Camera);
 
    AlterNode = PlayerNode->createChildSceneNode();
-   AlterNode->setPosition(0,0,-50);
+   AlterNode->setPosition(0,0,-100);
    
    Ogre::Light* light = SceneMgr->createLight("PlayerLight");
    //light->setPosition(300,300,300);
