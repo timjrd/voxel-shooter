@@ -379,17 +379,19 @@ bool App::Go()
 
    Ogre::Light* light = SceneMgr->createLight("Light");
    light->setPosition(w/2,h/2,d/2);
-   light->setDiffuseColour(0.2, 0.6, 0.7);
+   light->setDiffuseColour(0.5, 0.5, 0.5);
 
    Ogre::Light* plight = SceneMgr->createLight("PlayerLight");
-   plight->setDiffuseColour(0.3, 0.3, 0.3);
+   plight->setDiffuseColour(0.2, 0.2, 0.2);
    PlayerNode->attachObject(plight);
 
    YawNode->setPosition(w/2, h/2, d/2);
    
    
    //Voxels->SetSphere(0,0,0,10,true);
-   Voxels->Generate(MeshSize,Width,Height,Depth,time(NULL));
+   const unsigned long long seed = time(NULL);
+   std::cout << "\n\n-------------------------\nSEED: " << seed << "\n-------------------------\n\n";
+   Voxels->Generate(MeshSize,Width,Height,Depth,seed);
    
    /*
    Voxels->SetSphere(500,200,200,50,true);
@@ -409,7 +411,7 @@ bool App::Go()
    */
    
  
-   SceneMgr->setAmbientLight(Ogre::ColourValue(0.1, 0.1, 0.1));
+   SceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
    //SceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
    
    Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
@@ -432,12 +434,14 @@ bool App::Go()
    return true;
 }
 
-
+float random(float min, float max) {
+   return (rand()/(float)RAND_MAX)*(max-min) + min;
+}
 void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContainer::Quad> & quads)
 {
    ManualObject* & mesh = Meshes[z*Width*Height + y*Width + x];
 
-   std::cout << "\n\n-------------------------------------\nUpdateMesh(" << x << "," << y << "," << z << ") with " << quads.size() << " quads\n" << std::endl;
+   //std::cout << "\n\n-------------------------------------\nUpdateMesh(" << x << "," << y << "," << z << ") with " << quads.size() << " quads\n" << std::endl;
    
    if (quads.empty())
    {
@@ -465,16 +469,30 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContai
    unsigned int i = 0;
    for (const VoxelContainer::Quad & q : quads)
    {
+      float d = random(-0.1,0.1);
+      
+      ColourValue colour(0.45+d, 0.42+d, 0.31+d);
+      /*if (q.Normal.x != 0 or q.Normal.z != 0 or q.Normal.y == -1) {
+         colour = ColourValue(0.45,0.42,0.31);
+      }
+      else {
+         colour = ColourValue(0.17,0.37,0.04);
+         }*/
+      
       mesh->position(q.A);
+      mesh->colour(colour);
       mesh->normal(q.Normal);
 
       mesh->position(q.B);
+      mesh->colour(colour);
       mesh->normal(q.Normal);
 
       mesh->position(q.C);
+      mesh->colour(colour);
       mesh->normal(q.Normal);
 
       mesh->position(q.D);
+      mesh->colour(colour);
       mesh->normal(q.Normal);
 
       mesh->index(i);
@@ -494,6 +512,8 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContai
 
 int main()
 {
+   srand(time(NULL));
+   
    App app;
    app.Go();
    

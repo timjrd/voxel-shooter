@@ -57,8 +57,11 @@ public:
    ~VoxelContainer();
 
    void Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed);
+   void BlurThreshold();
 
+   static uint8_t & at(size_t x, size_t y, size_t z, std::vector<uint8_t> & voxels, size_t width, size_t height, size_t depth);
    uint8_t & At(size_t x, size_t y, size_t z);
+
    void SetSphere(float cx, float cy, float cz, float r, bool set);
    void SetSphere(Ogre::Vector3 pos, float r, bool set);
    void SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set);

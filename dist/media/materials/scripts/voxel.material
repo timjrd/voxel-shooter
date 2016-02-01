@@ -7,7 +7,9 @@ material voxel
 		{
                         lighting on
 
-			diffuse 0.7 0.7 0.7
+			ambient  vertexcolour
+                        diffuse  vertexcolour
+                        specular vertexcolour
 		}
 	}
 }
