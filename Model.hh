@@ -3,12 +3,25 @@
 #include <OgreVector3.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <algorithm>
+#include <vector>
 
 template<typename T>
 T between(T a, T x, T b) {
    return std::max(a, std::min(x, b));
 }
+
+class Random
+{
+private:
+   unsigned long long Previous;
+
+public:
+   Random(unsigned long long seed);
+   
+   int Next(int min, int max);
+};
 
 class VoxelContainer
 {
@@ -32,7 +45,7 @@ public:
 private:
    MeshListener * Listener = nullptr;
    
-   bool * Voxels = nullptr;
+   std::vector<uint8_t> Voxels;
    size_t Width  = 0;
    size_t Height = 0;
    size_t Depth  = 0;
@@ -43,12 +56,17 @@ public:
    VoxelContainer(size_t meshSize, size_t width, size_t height, size_t depth, MeshListener * listener);
    ~VoxelContainer();
 
-   bool & At(size_t x, size_t y, size_t z);
-   void SetSphere(float x, float y, float z, float r, bool b);
-   void SetSphere(Ogre::Vector3 pos, float r, bool b);
+   void Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed);
+
+   uint8_t & At(size_t x, size_t y, size_t z);
+   void SetSphere(float cx, float cy, float cz, float r, bool set);
+   void SetSphere(Ogre::Vector3 pos, float r, bool set);
+   void SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set);
+   void DSetEllipsoid(int cx, int cy, int cz, int a, int b, int c, bool set);
 
    bool BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max);
    bool PointIntersects(Ogre::Vector3 pos);
-   
+
+   void UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int toY, int toZ);
    void ExtractMesh(size_t x, size_t y, size_t z, std::vector<Quad> & res);
 };

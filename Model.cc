@@ -4,6 +4,19 @@
 
 using namespace std;
 
+Random::Random(unsigned long long seed)
+   : Previous(seed)
+{}
+   
+int Random::Next(int min, int max)
+{
+   Previous = (1103515245 * Previous + 12345) % 2147483648;
+
+   return (Previous % (max-min+1)) + min;
+}
+
+
+
 VoxelContainer::VoxelContainer(size_t meshSize, size_t width, size_t height, size_t depth, MeshListener * listener)
    : Listener(listener)
    , Width(meshSize*width)
@@ -11,55 +24,176 @@ VoxelContainer::VoxelContainer(size_t meshSize, size_t width, size_t height, siz
    , Depth(meshSize*depth)
    , MeshSize(meshSize)
 {
-   Voxels = new bool[Width*Height*Depth];
-   for (size_t i=0; i<Width*Height*Depth; i++)
-      Voxels[i] = false;
+   Voxels.resize(Width*Height*Depth);
+   for (uint8_t & v : Voxels)
+      v = false;
 }
 
 VoxelContainer::~VoxelContainer()
-{
-   delete [] Voxels;
-}
+{}
 
-bool & VoxelContainer::At(size_t x, size_t y, size_t z)
+uint8_t & VoxelContainer::At(size_t x, size_t y, size_t z)
 {
    return Voxels[z*Width*Height + y*Width + x];
 }
 
-void VoxelContainer::SetSphere(Ogre::Vector3 pos, float r, bool b) {
-   SetSphere(pos.x, pos.y, pos.z, r, b);
-}
-void VoxelContainer::SetSphere(float sx, float sy, float sz, float r, bool b)
-{
-   const int fromX = between(0, (int) (sx-r), ((int)Width)-1);
-   const int fromY = between(0, (int) (sy-r), ((int)Height)-1);
-   const int fromZ = between(0, (int) (sz-r), ((int)Depth)-1);
 
-   const int toX = between(0, (int) (sx+r), ((int)Width)-1);
-   const int toY = between(0, (int) (sy+r), ((int)Height)-1);
-   const int toZ = between(0, (int) (sz+r), ((int)Depth)-1);
+struct Cave {
+   int x, y, z, a, b, c;
+   int vx, vy, vz, va, vb, vc;
+   int nx, ny, nz, na, nb, nc;
+};
+void VoxelContainer::Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed)
+{
+   MeshSize = meshSize;
+   Width    = MeshSize*width;
+   Height   = MeshSize*height;
+   Depth    = MeshSize*depth;
+
+   Voxels.resize(Width*Height*Depth);
+   for (uint8_t & v : Voxels)
+      v = true;
+
+   //UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1); return;
+   
+   // --
+   
+   Random random(seed);
+   
+   const int iterations = 1200;
+   const int period = 15;
+   
+   const int maxRadius = 40;// min(Width, min(Height, Depth)) / 7;
+   const int minRadius = 10;
+   
+   std::vector<Cave> caves(1);
+   for (Cave & c : caves)
+   {
+      c.x = Width/2;
+      c.y = Height/2;
+      c.z = Depth/2;
+      
+      c.nx = random.Next(-5,5);
+      c.ny = random.Next(-5,5);
+      c.nz = random.Next(-5,5);
+
+      c.a = random.Next(minRadius,maxRadius);
+      c.b = random.Next(minRadius,maxRadius);
+      c.c = random.Next(minRadius,maxRadius);
+      
+      c.na = random.Next(-5,5);
+      c.nb = random.Next(-5,5);
+      c.nc = random.Next(-5,5);
+   }
+   
+   for(int i=0; i < iterations; i++)
+   {
+      const int periodProgress = ((i%period)*100) / period;
+
+      if (periodProgress == 0)
+      {
+         for (Cave & c : caves)
+         {
+            c.vx = c.nx;
+            c.vy = c.ny;
+            c.vz = c.nz;
+
+            c.va = c.na;
+            c.vb = c.nb;
+            c.vc = c.nc;
+
+            c.nx = random.Next(-5,5);
+            c.ny = random.Next(-5,5);
+            c.nz = random.Next(-5,5);
+            
+            c.na = random.Next(-5,5);
+            c.nb = random.Next(-5,5);
+            c.nc = random.Next(-5,5);
+         }
+      }
+      
+      for (Cave & c : caves)
+      {
+         c.a = between(minRadius, c.a + ((c.na-c.va) * periodProgress)/100 + c.va, maxRadius);
+         c.b = between(minRadius, c.b + ((c.nb-c.vb) * periodProgress)/100 + c.vb, maxRadius);
+         c.c = between(minRadius, c.c + ((c.nc-c.vc) * periodProgress)/100 + c.vc, maxRadius);
+
+         c.x = between(c.a+1, c.x + ((c.nx-c.vx) * periodProgress)/100 + c.vx, ((int)Width)-1-c.a-1);
+         c.y = between(c.b+1, c.y + ((c.ny-c.vy) * periodProgress)/100 + c.vy, ((int)Height)-1-c.b-1);
+         c.z = between(c.c+1, c.z + ((c.nz-c.vz) * periodProgress)/100 + c.vz, ((int)Depth)-1-c.c-1);
+
+
+         DSetEllipsoid(c.x, c.y, c.z, c.a, c.b, c.c, false);
+      }
+   }
+
+   UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1);
+}
+
+void VoxelContainer::SetSphere(Ogre::Vector3 pos, float r, bool set) {
+   SetSphere(pos.x, pos.y, pos.z, r, set);
+}
+void VoxelContainer::SetSphere(float cx, float cy, float cz, float r, bool set) {
+   SetEllipsoid(cx,cy,cz,r,r,r,set);
+}
+
+void VoxelContainer::SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set)
+{
+   const int fromX = between(0, (int) (cx-a), ((int)Width)-1);
+   const int fromY = between(0, (int) (cy-b), ((int)Height)-1);
+   const int fromZ = between(0, (int) (cz-c), ((int)Depth)-1);
+
+   const int toX = between(0, (int) (cx+a), ((int)Width)-1);
+   const int toY = between(0, (int) (cy+b), ((int)Height)-1);
+   const int toZ = between(0, (int) (cz+c), ((int)Depth)-1);
 
    std::cout << "\n" << std::endl;
    
-   std::cout << "SetSphere: " << fromX << "," << fromY << "," << fromZ << std::endl;
+   std::cout << "SetEllipsoid: " << fromX << "," << fromY << "," << fromZ << std::endl;
    
    for (int x=fromX; x<=toX; x++)
       for (int y=fromY; y<=toY; y++)
          for (int z=fromZ; z<=toZ; z++)
          {
-            const float dx = x+0.5 - sx;
-            const float dy = y+0.5 - sy;
-            const float dz = z+0.5 - sz;
-            const float d = sqrt(dx*dx + dy*dy + dz*dz);
+            const float tx = x+0.5 - cx;
+            const float ty = y+0.5 - cy;
+            const float tz = z+0.5 - cz;
 
-            if (d <= r)
-            {
-               At(x,y,z) = b;
-               //std::cout << "set sphere voxel !" << std::endl;
-            }
-
+            if ( (tx*tx)/(a*a) + (ty*ty)/(b*b) + (tz*tz)/(c*c) <= 1 )
+               At(x,y,z) = set;
          }
 
+   UpdateMeshes(fromX,fromY,fromZ,toX,toY,toZ);
+}
+
+void VoxelContainer::DSetEllipsoid(int cx, int cy, int cz, int a, int b, int c, bool set)
+{
+   const int fromX = between(0, cx-a, ((int)Width)-1);
+   const int fromY = between(0, cy-b, ((int)Height)-1);
+   const int fromZ = between(0, cz-c, ((int)Depth)-1);
+
+   const int toX = between(0, cx+a, ((int)Width)-1);
+   const int toY = between(0, cy+b, ((int)Height)-1);
+   const int toZ = between(0, cz+c, ((int)Depth)-1);
+
+   //std::cout << "DSetEllipsoid: " << fromX << "," << fromY << "," << fromZ << std::endl;
+   
+   for (int x=fromX; x<=toX; x++)
+      for (int y=fromY; y<=toY; y++)
+         for (int z=fromZ; z<=toZ; z++)
+         {
+            const int tx = x - cx;
+            const int ty = y - cy;
+            const int tz = z - cz;
+
+            if ( (tx*tx*100)/(a*a) + (ty*ty*100)/(b*b) + (tz*tz*100)/(c*c) <= 100 )
+               At(x,y,z) = set;
+         }
+}
+
+
+void VoxelContainer::UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int toY, int toZ)
+{
    if (Listener)
       for (int x=fromX/MeshSize; x<=toX/MeshSize; x++)
          for (int y=fromY/MeshSize; y<=toY/MeshSize; y++)
@@ -71,6 +205,7 @@ void VoxelContainer::SetSphere(float sx, float sy, float sz, float r, bool b)
                Listener->UpdateMesh(x,y,z,mesh);
             }
 }
+
 
 void VoxelContainer::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Quad> & res)
 {

@@ -5,7 +5,9 @@ material voxel
 	{
 		pass
 		{
-			ambient 0.8 0.8 0.8
+                        lighting on
+
+			diffuse 0.7 0.7 0.7
 		}
 	}
 }

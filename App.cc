@@ -89,20 +89,22 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
     
 
     Vector3 translate(0,0,0);
+    const float speed = 1;
+    
     if (Keyboard->isKeyDown(OIS::KC_Z) and not Keyboard->isKeyDown(OIS::KC_S))
-       translate.z = -1;
+       translate.z = -speed;
     else if (Keyboard->isKeyDown(OIS::KC_S) and not Keyboard->isKeyDown(OIS::KC_Z))
-       translate.z = 1;
+       translate.z = speed;
 
     if (Keyboard->isKeyDown(OIS::KC_Q) and not Keyboard->isKeyDown(OIS::KC_D))
-       translate.x = -1;
+       translate.x = -speed;
     else if (Keyboard->isKeyDown(OIS::KC_D) and not Keyboard->isKeyDown(OIS::KC_Q))
-       translate.x = 1;
+       translate.x = speed;
 
     if (Keyboard->isKeyDown(OIS::KC_SPACE) and not Keyboard->isKeyDown(OIS::KC_LSHIFT))
-       translate.y = 1;
+       translate.y = speed;
     else if (Keyboard->isKeyDown(OIS::KC_LSHIFT) and not Keyboard->isKeyDown(OIS::KC_SPACE))
-       translate.y = -1;
+       translate.y = -speed;
 
     Translate(translate);
     
@@ -113,13 +115,30 @@ void App::Translate(Vector3 dir)
 {
    const Vector3 d(PlayerRadius, PlayerRadius, PlayerRadius);
 
-   const Vector3 t = YawNode->getOrientation() * dir;
+   const Vector3 t = YawNode->getOrientation() * PlayerNode->getOrientation() * dir;
 
-   const Vector3 pos = PlayerNode->_getDerivedPosition();
+   Vector3 pos = PlayerNode->_getDerivedPosition();
 
    //YawNode->setPosition(pos+t); return;
 
-   // le bout de code qui suit c'est soit du génie soit une immonde atrocité, en tout cas ça marche ^^
+   const Vector3 x(t.x,0,0);
+   const Vector3 y(0,t.y,0);
+   const Vector3 z(0,0,t.z);
+
+   if (not Voxels->BoxIntersects(pos+z - d, pos+z + d))
+      pos += z;
+   
+   if (not Voxels->BoxIntersects(pos+x - d, pos+x + d))
+      pos += x;
+   
+   if (not Voxels->BoxIntersects(pos+y - d, pos+y + d))
+      pos += y;
+
+   YawNode->setPosition(pos);
+
+   /*
+   // inutile...
+     
    const Vector3 ___ = pos;
    const Vector3 __z = pos + Vector3(0  , 0  , t.z);
    const Vector3 _y_ = pos + Vector3(0  , t.y, 0  );
@@ -149,6 +168,7 @@ void App::Translate(Vector3 dir)
 
    else if (not Voxels->BoxIntersects(_y_ - d, _y_ + d))
       YawNode->setPosition(_y_);
+   */
 }
 
 
@@ -161,9 +181,9 @@ bool App::Go()
    PlayerRadius = 3;
    
    MeshSize = 30;
-   Width = Height = Depth = 30;
+   Width = Height = Depth = 10;
    Voxels = new VoxelContainer(MeshSize, Width, Height, Depth, this);
-   
+
    Meshes = new Ogre::ManualObject*[Width*Height*Depth];
    for (size_t i=0; i<Width*Height*Depth; i++)
       Meshes[i] = nullptr;
@@ -217,14 +237,6 @@ bool App::Go()
    AlterNode = PlayerNode->createChildSceneNode();
    AlterNode->setPosition(0,0,-100);
    
-   Ogre::Light* light = SceneMgr->createLight("PlayerLight");
-   //light->setPosition(300,300,300);
-   PlayerNode->attachObject(light);
-
-
-   YawNode->setPosition(300,300,300);
-   
-
    const float w = Width * MeshSize;
    const float h = Height * MeshSize;
    const float d = Depth * MeshSize;
@@ -364,6 +376,22 @@ bool App::Go()
    borders->end();
    SceneMgr->getRootSceneNode()->attachObject(borders);
 
+
+   Ogre::Light* light = SceneMgr->createLight("Light");
+   light->setPosition(w/2,h/2,d/2);
+   light->setDiffuseColour(0.2, 0.6, 0.7);
+
+   Ogre::Light* plight = SceneMgr->createLight("PlayerLight");
+   plight->setDiffuseColour(0.3, 0.3, 0.3);
+   PlayerNode->attachObject(plight);
+
+   YawNode->setPosition(w/2, h/2, d/2);
+   
+   
+   //Voxels->SetSphere(0,0,0,10,true);
+   Voxels->Generate(MeshSize,Width,Height,Depth,time(NULL));
+   
+   /*
    Voxels->SetSphere(500,200,200,50,true);
    Voxels->SetSphere(500,300,200,10,true);
    Voxels->SetSphere(500,400,200,5,true);
@@ -375,12 +403,11 @@ bool App::Go()
    Voxels->SetSphere(220,100,200,35,false);
    Voxels->SetSphere(180,100,200,35,false);
 
+   //Voxels->SetEllipsoid(600,600,600,50,10,30,true);
+
+   //Voxels->SetEllipsoid(600,600,600,200,200,200,true);
+   */
    
-   Ogre::Entity* ogreEntity = SceneMgr->createEntity("ogrehead.mesh");
- 
-   Ogre::SceneNode* ogreNode = SceneMgr->getRootSceneNode()->createChildSceneNode();
-   ogreNode->attachObject(ogreEntity);
-   ogreNode->setPosition(200,200,200);
  
    SceneMgr->setAmbientLight(Ogre::ColourValue(0.1, 0.1, 0.1));
    //SceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
