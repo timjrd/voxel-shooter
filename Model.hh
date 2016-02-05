@@ -23,7 +23,7 @@ public:
    int Next(int min, int max);
 };
 
-class VoxelContainer
+class Model
 {
 public:   
    struct Quad
@@ -53,8 +53,8 @@ private:
    size_t MeshSize = 0;
 
 public:
-   VoxelContainer(size_t meshSize, size_t width, size_t height, size_t depth, MeshListener * listener);
-   ~VoxelContainer();
+   Model(size_t meshSize, size_t width, size_t height, size_t depth, MeshListener * listener);
+   ~Model();
 
    void Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed);
    void BlurThreshold();

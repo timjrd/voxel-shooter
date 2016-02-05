@@ -17,7 +17,7 @@ int Random::Next(int min, int max)
 
 
 
-VoxelContainer::VoxelContainer(size_t meshSize, size_t width, size_t height, size_t depth, MeshListener * listener)
+Model::Model(size_t meshSize, size_t width, size_t height, size_t depth, MeshListener * listener)
    : Listener(listener)
    , Width(meshSize*width)
    , Height(meshSize*height)
@@ -29,14 +29,14 @@ VoxelContainer::VoxelContainer(size_t meshSize, size_t width, size_t height, siz
       v = false;
 }
 
-VoxelContainer::~VoxelContainer()
+Model::~Model()
 {}
 
-uint8_t & VoxelContainer::at(size_t x, size_t y, size_t z, std::vector<uint8_t> & voxels, size_t width, size_t height, size_t depth)
+uint8_t & Model::at(size_t x, size_t y, size_t z, std::vector<uint8_t> & voxels, size_t width, size_t height, size_t depth)
 {
    return voxels[z*width*height + y*width + x];
 }
-uint8_t & VoxelContainer::At(size_t x, size_t y, size_t z)
+uint8_t & Model::At(size_t x, size_t y, size_t z)
 {
    return at(x,y,z, Voxels, Width, Height, Depth);
 }
@@ -47,7 +47,7 @@ struct Cave {
    int vx, vy, vz, va, vb, vc;
    int nx, ny, nz, na, nb, nc;
 };
-void VoxelContainer::Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed)
+void Model::Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed)
 {
    MeshSize = meshSize;
    Width    = MeshSize*width;
@@ -61,7 +61,7 @@ void VoxelContainer::Generate(size_t meshSize, size_t width, size_t height, size
    //SetSphere(200,200,200,10,true); SetSphere(220,200,200,10,true); BlurThreshold(); UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1); return;
    
    // --
-   
+
    Random random(seed);
    
    const int iterations = 1200;
@@ -131,12 +131,12 @@ void VoxelContainer::Generate(size_t meshSize, size_t width, size_t height, size
       }
    }
 
-   BlurThreshold();
+   //BlurThreshold();
    
    UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1);
 }
 
-void VoxelContainer::BlurThreshold()
+void Model::BlurThreshold()
 {
    const int blurSize  = 5;
    const int threshold = 4; // x / 10
@@ -176,14 +176,14 @@ void VoxelContainer::BlurThreshold()
    Voxels = std::move(result);
 }
 
-void VoxelContainer::SetSphere(Ogre::Vector3 pos, float r, bool set) {
+void Model::SetSphere(Ogre::Vector3 pos, float r, bool set) {
    SetSphere(pos.x, pos.y, pos.z, r, set);
 }
-void VoxelContainer::SetSphere(float cx, float cy, float cz, float r, bool set) {
+void Model::SetSphere(float cx, float cy, float cz, float r, bool set) {
    SetEllipsoid(cx,cy,cz,r,r,r,set);
 }
 
-void VoxelContainer::SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set)
+void Model::SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set)
 {
    const int fromX = between(0, (int) (cx-a), ((int)Width)-1);
    const int fromY = between(0, (int) (cy-b), ((int)Height)-1);
@@ -210,7 +210,7 @@ void VoxelContainer::SetEllipsoid(float cx, float cy, float cz, float a, float b
    UpdateMeshes(fromX,fromY,fromZ,toX,toY,toZ);
 }
 
-void VoxelContainer::DSetEllipsoid(int cx, int cy, int cz, int a, int b, int c, bool set)
+void Model::DSetEllipsoid(int cx, int cy, int cz, int a, int b, int c, bool set)
 {
    const int fromX = between(0, cx-a, ((int)Width)-1);
    const int fromY = between(0, cy-b, ((int)Height)-1);
@@ -236,7 +236,7 @@ void VoxelContainer::DSetEllipsoid(int cx, int cy, int cz, int a, int b, int c, 
 }
 
 
-void VoxelContainer::UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int toY, int toZ)
+void Model::UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int toY, int toZ)
 {
    if (Listener)
       for (int x=fromX/MeshSize; x<=toX/MeshSize; x++)
@@ -251,7 +251,7 @@ void VoxelContainer::UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int 
 }
 
 
-void VoxelContainer::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Quad> & res)
+void Model::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Quad> & res)
 {
    for(size_t x=mx*MeshSize; x < mx*MeshSize+MeshSize; x++)
       for(size_t y=my*MeshSize; y < my*MeshSize+MeshSize; y++)
@@ -319,7 +319,7 @@ void VoxelContainer::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Qu
 }
 
 
-bool VoxelContainer::BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max)
+bool Model::BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max)
 {
    const int fromX = between(0, (int) min.x, ((int)Width)-1);
    const int fromY = between(0, (int) min.y, ((int)Height)-1);
@@ -341,7 +341,7 @@ bool VoxelContainer::BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max)
    return false;
 }
 
-bool VoxelContainer::PointIntersects(Ogre::Vector3 pos)
+bool Model::PointIntersects(Ogre::Vector3 pos)
 {
    const int x = pos.x;
    const int y = pos.y;

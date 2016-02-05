@@ -26,7 +26,7 @@ App::~App()
    //for (size_t i=0; i<Width*Height*Depth; i++)
       //if (Meshes[i])
          //SceneMgr->destroyManualObject(Meshes[i]);
-   
+
    delete [] Meshes;
    delete Root;
    delete Voxels;
@@ -172,6 +172,18 @@ void App::Translate(Vector3 dir)
 }
 
 
+void setLightAttenuation(Ogre::Light & light, const float range)
+{
+   const float L   = 0;
+   const float min = 0.04;
+   const float max = 1;
+   
+   const float K   = 1/max;
+   const float q   = (1/min - 1/max - L*range) / (range*range);
+
+   light.setAttenuation(range,K,L,q);
+}
+
 bool App::Go()
 {
    ResourcesCfg = "resources.cfg";
@@ -180,9 +192,9 @@ bool App::Go()
 
    PlayerRadius = 3;
    
-   MeshSize = 30;
-   Width = Height = Depth = 10;
-   Voxels = new VoxelContainer(MeshSize, Width, Height, Depth, this);
+   MeshSize = 10;
+   Width = Height = Depth = 30;
+   Voxels = new Model(MeshSize, Width, Height, Depth, this);
 
    Meshes = new Ogre::ManualObject*[Width*Height*Depth];
    for (size_t i=0; i<Width*Height*Depth; i++)
@@ -376,20 +388,23 @@ bool App::Go()
    borders->end();
    SceneMgr->getRootSceneNode()->attachObject(borders);
 
-
+   /*
    Ogre::Light* light = SceneMgr->createLight("Light");
    light->setPosition(w/2,h/2,d/2);
-   light->setDiffuseColour(0.5, 0.5, 0.5);
+   light->setDiffuseColour(0.5, 1, 0.5);
+   setLightAttenuation(*light, 100);
+   */
 
    Ogre::Light* plight = SceneMgr->createLight("PlayerLight");
-   plight->setDiffuseColour(0.2, 0.2, 0.2);
+   plight->setDiffuseColour(1, 1, 1);
+   setLightAttenuation(*plight, 270);
    PlayerNode->attachObject(plight);
 
    YawNode->setPosition(w/2, h/2, d/2);
    
    
    //Voxels->SetSphere(0,0,0,10,true);
-   const unsigned long long seed = time(NULL);
+   const unsigned long long seed = 1454691946;//time(NULL);
    std::cout << "\n\n-------------------------\nSEED: " << seed << "\n-------------------------\n\n";
    Voxels->Generate(MeshSize,Width,Height,Depth,seed);
    
@@ -412,7 +427,7 @@ bool App::Go()
    
  
    SceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
-   //SceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
+   //SceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED);
    
    Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
    OIS::ParamList pl;
@@ -437,7 +452,7 @@ bool App::Go()
 float random(float min, float max) {
    return (rand()/(float)RAND_MAX)*(max-min) + min;
 }
-void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContainer::Quad> & quads)
+void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad> & quads)
 {
    ManualObject* & mesh = Meshes[z*Width*Height + y*Width + x];
 
@@ -467,7 +482,7 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContai
    }
 
    unsigned int i = 0;
-   for (const VoxelContainer::Quad & q : quads)
+   for (const Model::Quad & q : quads)
    {
       float d = random(-0.1,0.1);
       

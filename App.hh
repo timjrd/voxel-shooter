@@ -12,10 +12,10 @@
 #include <OISKeyboard.h>
 #include <OISMouse.h>
 
-class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public VoxelContainer::MeshListener
+class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public Model::MeshListener
 {
   private:
-   VoxelContainer * Voxels = nullptr;
+   Model * Voxels = nullptr;
    Ogre::ManualObject ** Meshes = nullptr;
    size_t Width;
    size_t Height;
@@ -43,6 +43,7 @@ class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public
    void windowClosed(Ogre::RenderWindow* rw)  override;
    bool frameRenderingQueued(const Ogre::FrameEvent& evt) override;
 
+   
 
    void Translate(Ogre::Vector3);
    
@@ -52,5 +53,5 @@ class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public
  
    bool Go();
 
-   void UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContainer::Quad> &) override;
+   void UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad> &) override;
 };
