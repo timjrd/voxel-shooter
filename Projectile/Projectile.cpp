@@ -5,6 +5,7 @@
 #include <OgreString.h>
 #include <OgreBillboardSet.h>
 #include <OgreEntity.h>
+#include <OgreRibbonTrail.h>
 
 #include "Projectile.hh"
 
@@ -29,6 +30,15 @@ Projectile::Projectile(Ogre::Vector3 playerPosition,  Ogre::Quaternion orientati
 
 	projectileNode->attachObject(projectileBbs);
 
+    Ogre::RibbonTrail *mTrail = sceneMgr->createRibbonTrail(uniqueName);
+    mTrail->setMaterialName("Examples/LightRibbonTrail");
+    mTrail->setTrailLength(4000);
+    mTrail->setInitialColour(0, 0.0, 1.0, 0.0);
+    mTrail->setColourChange(0, 0.5, 0.5, 0.5, 0.5);
+    mTrail->setMaxChainElements(20);
+    mTrail->setInitialWidth(0, 1);
+    mTrail->addNode(projectileNode);
+    sceneMgr->getRootSceneNode()->attachObject(mTrail);
 }
 
 Projectile::~Projectile() 

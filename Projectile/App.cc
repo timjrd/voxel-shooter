@@ -107,7 +107,7 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
 
 
    if (Mouse->getMouseState().buttonDown(OIS::MB_Left)) {
-        ProjectileArray[fireId] = new Projectile(YawNode->getPosition() + Vector3(15, 2, 0), PlayerNode->_getDerivedOrientation(), SceneMgr, fireId);
+        ProjectileArray[fireId] = new Projectile(YawNode->getPosition() + Vector3(10,0,0), PlayerNode->_getDerivedOrientation(), SceneMgr, fireId);
 		fireId += 1;
 		std::cout << "FIRE ID **** *" << fireId << std::endl;;
 	}
