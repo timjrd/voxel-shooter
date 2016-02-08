@@ -97,15 +97,15 @@ if (NOT OGRE_BUILD_PLATFORM_IPHONE)
 endif()
  
 set(HDRS
-  ./App.hh
-  ./Model.hh
-  ./Projectile.hh
+  ./src/App.hh
+  ./src/Model.hh
+  ./src/Projectile.hh
 )
  
 set(SRCS
-  ./App.cc
-  ./Model.cc
-  ./Projectile.cpp
+  ./src/App.cc
+  ./src/Model.cc
+  ./src/Projectile.cc
 )
  
 include_directories( ${OIS_INCLUDE_DIRS}
