@@ -1,0 +1,15 @@
+
+material voxel
+{
+	technique
+	{
+		pass
+		{
+                        lighting on
+
+			ambient  vertexcolour
+                        diffuse  vertexcolour
+                        specular vertexcolour
+		}
+	}
+}

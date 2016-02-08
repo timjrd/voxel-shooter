@@ -1,3 +1,6 @@
+#include "Projectile.hh"
+#include "utils.hh"
+
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 #include <OgreVector3.h>
@@ -5,8 +8,6 @@
 #include <OgreBillboardSet.h>
 #include <OgreEntity.h>
 #include <OgreRibbonTrail.h>
-
-#include "Projectile.hh"
 
 Projectile::Projectile(Ogre::Vector3 playerPosition,  Ogre::Quaternion orientation, Ogre::SceneManager *sceneMgr,
                        Ogre::Real projectileId)
@@ -28,17 +29,23 @@ Projectile::Projectile(Ogre::Vector3 playerPosition,  Ogre::Quaternion orientati
 	projectileNode = sceneMgr->getRootSceneNode()->createChildSceneNode(uniqueName, playerPosition);
 	projectileNode->setOrientation(orientation);
 
-	projectileNode->attachObject(projectileBbs);
+	//projectileNode->attachObject(projectileBbs);
 
     Ogre::RibbonTrail *mTrail = sceneMgr->createRibbonTrail(uniqueName);
     mTrail->setMaterialName("Examples/LightRibbonTrail");
-    mTrail->setTrailLength(300);
+    mTrail->setTrailLength(50);
     mTrail->setInitialColour(0, 0.0, 1.0, 0.0);
     mTrail->setColourChange(0, 0.5, 0.5, 0.5, 0.5);
     mTrail->setMaxChainElements(20);
     mTrail->setInitialWidth(0, 0.5);
     mTrail->addNode(projectileNode);
     sceneMgr->getRootSceneNode()->attachObject(mTrail);
+
+
+    Ogre::Light* light = sceneMgr->createLight();
+    light->setDiffuseColour(0, 1, 0);
+    setLightAttenuation(*light, 50);
+    projectileNode->attachObject(light);
 }
 
 Projectile::~Projectile() 

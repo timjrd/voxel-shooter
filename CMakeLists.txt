@@ -100,12 +100,14 @@ set(HDRS
   ./src/App.hh
   ./src/Model.hh
   ./src/Projectile.hh
+  ./src/utils.hh
 )
  
 set(SRCS
   ./src/App.cc
   ./src/Model.cc
   ./src/Projectile.cc
+  ./src/utils.cc
 )
  
 include_directories( ${OIS_INCLUDE_DIRS}

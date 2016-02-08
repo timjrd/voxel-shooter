@@ -31,6 +31,11 @@ class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public
    Ogre::SceneManager* SceneMgr = nullptr;
    Ogre::Camera* Camera = nullptr;
 
+   int NbFrame = 0;
+   float FrameDurationSum = 0;
+
+   int NbQuads = 0;
+   
    float PlayerRadius;
    Ogre::SceneNode * PlayerNode = nullptr;
    Ogre::SceneNode * YawNode = nullptr;

@@ -1,5 +1,6 @@
 #include "App.hh"
- 
+#include "utils.hh"
+
 #include <OgreException.h>
 #include <OgreConfigFile.h>
 #include <OgreRenderWindow.h>
@@ -86,7 +87,7 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
         ProjectileArray[fireId] = new Projectile(YawNode->getPosition() + PlayerNode->_getDerivedOrientation() * Vector3(1,0,1),
                                                  PlayerNode->_getDerivedOrientation(), SceneMgr, fireId);
 		fireId += 1;
-		std::cout << "FIRE ID **** *" << fireId << std::endl;;
+		//std::cout << "FIRE ID **** *" << fireId << std::endl;;
 	}
     else if (Mouse->getMouseState().buttonDown(OIS::MB_Right))
        Voxels->SetSphere(AlterNode->_getDerivedPosition(), 6, false);
@@ -108,24 +109,36 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	
 
     Vector3 translate(0,0,0);
-    const float speed = 1;
     
     if (Keyboard->isKeyDown(OIS::KC_Z) and not Keyboard->isKeyDown(OIS::KC_S))
-       translate.z = -speed;
+       translate.z = -1;
     else if (Keyboard->isKeyDown(OIS::KC_S) and not Keyboard->isKeyDown(OIS::KC_Z))
-       translate.z = speed;
+       translate.z = 1;
 
     if (Keyboard->isKeyDown(OIS::KC_Q) and not Keyboard->isKeyDown(OIS::KC_D))
-       translate.x = -speed;
+       translate.x = -1;
     else if (Keyboard->isKeyDown(OIS::KC_D) and not Keyboard->isKeyDown(OIS::KC_Q))
-       translate.x = speed;
+       translate.x = 1;
 
     if (Keyboard->isKeyDown(OIS::KC_SPACE) and not Keyboard->isKeyDown(OIS::KC_LSHIFT))
-       translate.y = speed;
+       translate.y = 1;
     else if (Keyboard->isKeyDown(OIS::KC_LSHIFT) and not Keyboard->isKeyDown(OIS::KC_SPACE))
-       translate.y = -speed;
+       translate.y = -1;
 
-    Translate(translate);
+    translate.normalise();
+    
+    Translate(translate * evt.timeSinceLastFrame * 40);
+
+    FrameDurationSum += evt.timeSinceLastFrame;
+    NbFrame++;
+    
+    if (NbFrame == 40)
+    {
+       std::cout << (int) (1/(FrameDurationSum / NbFrame)) << " FPS" << std::endl;
+
+       NbFrame = 0;
+       FrameDurationSum = 0;
+    }
     
     return true;
 }
@@ -157,17 +170,6 @@ void App::Translate(Vector3 dir)
 }
 
 
-void setLightAttenuation(Ogre::Light & light, const float range)
-{
-   const float L   = 0;
-   const float min = 0.04;
-   const float max = 1;
-   
-   const float K   = 1/max;
-   const float q   = (1/min - 1/max - L*range) / (range*range);
-
-   light.setAttenuation(range,K,L,q);
-}
 
 bool App::Go()
 {
@@ -177,8 +179,8 @@ bool App::Go()
 
    PlayerRadius = 3;
    
-   MeshSize = 10;
-   Width = Height = Depth = 30;
+   MeshSize = 30;
+   Width = Height = Depth = 10;
    Voxels = new Model(MeshSize, Width, Height, Depth, this);
 
    Meshes = new Ogre::ManualObject*[Width*Height*Depth];
@@ -393,8 +395,8 @@ bool App::Go()
    std::cout << "\n\n-------------------------\nSEED: " << seed << "\n-------------------------\n\n";
    Voxels->Generate(MeshSize,Width,Height,Depth,seed);
 
-  
- 
+   std::cout << "\n\n-------------------------\nNB QUADS: " << NbQuads << "\n-------------------------\n\n";
+
    SceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
    //SceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED);
    
@@ -427,6 +429,9 @@ float random(float min, float max) {
 }
 void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad> & quads)
 {
+   NbQuads += quads.size(); // this is a hack :)
+
+   
    ManualObject* & mesh = Meshes[z*Width*Height + y*Width + x];
 
    //std::cout << "\n\n-------------------------------------\nUpdateMesh(" << x << "," << y << "," << z << ") with " << quads.size() << " quads\n" << std::endl;
@@ -446,7 +451,7 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad
    {
       mesh = SceneMgr->createManualObject();
       SceneMgr->getRootSceneNode()->attachObject(mesh);
-      mesh->setDynamic(true);
+      mesh->setDynamic(false);
       mesh->begin("voxel", RenderOperation::OT_TRIANGLE_LIST);
    }
    else

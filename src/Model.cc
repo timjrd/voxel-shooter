@@ -1,4 +1,5 @@
 #include "Model.hh"
+#include "utils.hh"
 
 #include <cmath>
 
