@@ -20,7 +20,7 @@ private:
 	float time;
 
 public:
-	Projectile(Ogre::Vector3 playerPosition, Ogre::Quaternion orientation, Ogre::SceneManager *sceneMgr, Ogre::Real projectileId);
+    Projectile(Ogre::Vector3 playerPosition, Ogre::Quaternion orientation, Ogre::SceneManager *sceneMgr, Ogre::Real projectileId);
 	~Projectile();
 
 	bool Update(float timeSinceLastFrame);

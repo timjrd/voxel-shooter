@@ -7,10 +7,6 @@
 #include <OgreEntity.h>
 #include <OgreWindowEventUtilities.h>
 #include <OgreManualObject.h>
-#include <OgreRibbonTrail.h>
-#include <OgreBillboard.h>
-#include <OgreBillboardSet.h>
-#include <OgreEntity.h>
 
 #include <iostream>
 
@@ -30,7 +26,7 @@ App::~App()
    //for (size_t i=0; i<Width*Height*Depth; i++)
       //if (Meshes[i])
          //SceneMgr->destroyManualObject(Meshes[i]);
-   
+
    delete [] Meshes;
    delete Root;
    delete Voxels;
@@ -82,40 +78,19 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
 
     const Radian d = Degree(-Mouse->getMouseState().Y.rel*0.1);
     const Radian newPitch = Ogre::Math::Abs(PlayerNode->getOrientation().getPitch() + d);
-    if(newPitch <= Ogre::Radian(Ogre::Math::PI/2)){
+    if(newPitch <= Ogre::Radian(Ogre::Math::PI/2))
        PlayerNode->pitch(d, Node::TS_LOCAL);
-	}
 
 
-    Vector3 translate(0,0,0);
-    if (Keyboard->isKeyDown(OIS::KC_Z) and not Keyboard->isKeyDown(OIS::KC_S))
-       translate.z = -1;
-    else if (Keyboard->isKeyDown(OIS::KC_S) and not Keyboard->isKeyDown(OIS::KC_Z))
-       translate.z = 1;
-
-    if (Keyboard->isKeyDown(OIS::KC_Q) and not Keyboard->isKeyDown(OIS::KC_D))
-       translate.x = -1;
-    else if (Keyboard->isKeyDown(OIS::KC_D) and not Keyboard->isKeyDown(OIS::KC_Q))
-       translate.x = 1;
-
-    if (Keyboard->isKeyDown(OIS::KC_SPACE) and not Keyboard->isKeyDown(OIS::KC_LSHIFT))
-       translate.y = 1;
-    else if (Keyboard->isKeyDown(OIS::KC_LSHIFT) and not Keyboard->isKeyDown(OIS::KC_SPACE))
-       translate.y = -1;
-	    
-	Translate(translate);
-
-
-   if (Mouse->getMouseState().buttonDown(OIS::MB_Left)) {
-        ProjectileArray[fireId] = new Projectile(YawNode->getPosition() + Vector3(10,0,0), PlayerNode->_getDerivedOrientation(), SceneMgr, fireId);
+     if (Mouse->getMouseState().buttonDown(OIS::MB_Left)) {
+        ProjectileArray[fireId] = new Projectile(YawNode->getPosition() + PlayerNode->_getDerivedOrientation() * Vector3(1,0,1),
+                                                 PlayerNode->_getDerivedOrientation(), SceneMgr, fireId);
 		fireId += 1;
 		std::cout << "FIRE ID **** *" << fireId << std::endl;;
 	}
-   else if (Mouse->getMouseState().buttonDown(OIS::MB_Right))  {
-		std::cout << "BOUTON DROIT " << std::endl;
+    else if (Mouse->getMouseState().buttonDown(OIS::MB_Right))
        Voxels->SetSphere(AlterNode->_getDerivedPosition(), 6, false);
-	}
-
+    
 	for(int n =0; n< 20000; n++) 
 	{
 		if(ProjectileArray[n] != nullptr) 
@@ -131,10 +106,27 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	if(fireId == 20000)
 		fireId = 0;
 	
-	//mYellowLightAnimState->addTime(evt.timeSinceLastFrame);
 
-	//UpdateAnimation();
+    Vector3 translate(0,0,0);
+    const float speed = 1;
+    
+    if (Keyboard->isKeyDown(OIS::KC_Z) and not Keyboard->isKeyDown(OIS::KC_S))
+       translate.z = -speed;
+    else if (Keyboard->isKeyDown(OIS::KC_S) and not Keyboard->isKeyDown(OIS::KC_Z))
+       translate.z = speed;
 
+    if (Keyboard->isKeyDown(OIS::KC_Q) and not Keyboard->isKeyDown(OIS::KC_D))
+       translate.x = -speed;
+    else if (Keyboard->isKeyDown(OIS::KC_D) and not Keyboard->isKeyDown(OIS::KC_Q))
+       translate.x = speed;
+
+    if (Keyboard->isKeyDown(OIS::KC_SPACE) and not Keyboard->isKeyDown(OIS::KC_LSHIFT))
+       translate.y = speed;
+    else if (Keyboard->isKeyDown(OIS::KC_LSHIFT) and not Keyboard->isKeyDown(OIS::KC_SPACE))
+       translate.y = -speed;
+
+    Translate(translate);
+    
     return true;
 }
 
@@ -162,7 +154,19 @@ void App::Translate(Vector3 dir)
       pos += y;
 
    YawNode->setPosition(pos);
+}
 
+
+void setLightAttenuation(Ogre::Light & light, const float range)
+{
+   const float L   = 0;
+   const float min = 0.04;
+   const float max = 1;
+   
+   const float K   = 1/max;
+   const float q   = (1/min - 1/max - L*range) / (range*range);
+
+   light.setAttenuation(range,K,L,q);
 }
 
 bool App::Go()
@@ -173,10 +177,10 @@ bool App::Go()
 
    PlayerRadius = 3;
    
-   MeshSize = 30;
+   MeshSize = 10;
    Width = Height = Depth = 30;
-   Voxels = new VoxelContainer(MeshSize, Width, Height, Depth, this);
-   
+   Voxels = new Model(MeshSize, Width, Height, Depth, this);
+
    Meshes = new Ogre::ManualObject*[Width*Height*Depth];
    for (size_t i=0; i<Width*Height*Depth; i++)
       Meshes[i] = nullptr;
@@ -230,14 +234,6 @@ bool App::Go()
    AlterNode = PlayerNode->createChildSceneNode();
    AlterNode->setPosition(0,0,-100);
    
-   Ogre::Light* light = SceneMgr->createLight("PlayerLight");
-   //light->setPosition(300,300,300);
-   PlayerNode->attachObject(light);
-
-
-   YawNode->setPosition(300,300,300);
-   
-
    const float w = Width * MeshSize;
    const float h = Height * MeshSize;
    const float d = Depth * MeshSize;
@@ -377,20 +373,31 @@ bool App::Go()
    borders->end();
    SceneMgr->getRootSceneNode()->attachObject(borders);
 
-   Voxels->SetSphere(500,200,200,50,true);
-   Voxels->SetSphere(500,300,200,10,true);
-   Voxels->SetSphere(500,400,200,5,true);
+   /*
+   Ogre::Light* light = SceneMgr->createLight("Light");
+   light->setPosition(w/2,h/2,d/2);
+   light->setDiffuseColour(0.5, 1, 0.5);
+   setLightAttenuation(*light, 100);
+   */
 
-   Voxels->SetSphere(200,500,200,50,true);
-   Voxels->SetSphere(220,500,200,35,false);
+   Ogre::Light* plight = SceneMgr->createLight("PlayerLight");
+   plight->setDiffuseColour(1, 1, 1);
+   setLightAttenuation(*plight, 270);
+   PlayerNode->attachObject(plight);
 
-   Voxels->SetSphere(200,100,200,50,true);
-   Voxels->SetSphere(220,100,200,35,false);
-   Voxels->SetSphere(180,100,200,35,false);
+   YawNode->setPosition(w/2, h/2, d/2);
+   
+   
+   //Voxels->SetSphere(0,0,0,10,true);
+   const unsigned long long seed = 1454691946;//time(NULL);
+   std::cout << "\n\n-------------------------\nSEED: " << seed << "\n-------------------------\n\n";
+   Voxels->Generate(MeshSize,Width,Height,Depth,seed);
 
-   SceneMgr->setAmbientLight(Ogre::ColourValue(0.1, 0.1, 0.1));
-   //SceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);q
-
+  
+ 
+   SceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
+   //SceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED);
+   
 	for(int i=0; i<20000; i++)
 		ProjectileArray[i] = nullptr;	
 
@@ -415,75 +422,14 @@ bool App::Go()
    return true;
 }
 
-void App::setupTrailLights()
-{
-
-		SceneNode* node;
-		Animation* anim;
-		Light* light;
-		BillboardSet* bbs;
-
-		// create a ribbon trail that our lights will leave behind
-		NameValuePairList params;
-		params["numberOfChains"] = "1";
-		params["maxElements"] = "80";
-		
-		trail = (RibbonTrail*) SceneMgr->createMovableObject("RibbonTrail", &params);
-	
-		SceneMgr->getRootSceneNode()->attachObject(trail);
-		
-		trail->setMaterialName("Examples/LightRibbonTrail");
-		trail->setTrailLength(400);
-		
-		// create a light node
-		node = SceneMgr->getRootSceneNode()->createChildSceneNode(Vector3(50, 30, 0));
-
-		// create a 14 second animation with spline interpolation
-		anim = SceneMgr->createAnimation("Path1", 7);
-		anim->setInterpolationMode(Animation::IM_SPLINE);
-
-		track = anim->createNodeTrack(1, node);  // create a node track for our animation
-
-		// enter keyframes for our track to define a path for the light to follow
-		Vector3 playerPos = YawNode->getPosition();
-
-		track->createNodeKeyFrame(0)->setTranslate(Vector3(playerPos.x + 10, playerPos.y, playerPos.z));
-		track->createNodeKeyFrame(2)->setTranslate(Vector3(0, 0, 0));
-
-		// create an animation state from the animation and enable it
-		mYellowLightAnimState = SceneMgr->createAnimationState("Path1");
-		mYellowLightAnimState->setEnabled(true);
-
-		// set initial settings for the ribbon trail and add the light node
-		trail->setInitialColour(0, 1.0, 0.8, 0);
-		trail->setColourChange(0, 0.5, 0.5, 0.5, 0.5);
-		trail->setInitialWidth(0, 5);
-		trail->addNode(node);
-
-		// attach a light with the same colour to the light node
-		light = SceneMgr->createLight();
-		light->setDiffuseColour(trail->getInitialColour(0));
-		node->attachObject(light);
-
-		// attach a flare with the same colour to the light node
-		bbs = SceneMgr->createBillboardSet(1);
-		bbs->createBillboard(Vector3::ZERO, trail->getInitialColour(0));
-		bbs->setMaterialName("Examples/Flare");
-		node->attachObject(bbs);
+float random(float min, float max) {
+   return (rand()/(float)RAND_MAX)*(max-min) + min;
 }
-
-void App::UpdateAnimation() {
-		Vector3 playerPos = YawNode->getPosition();
-
-		track->createNodeKeyFrame(0)->setTranslate(Vector3(playerPos.x + 10, playerPos.y, playerPos.z));
-		track->createNodeKeyFrame(2)->setTranslate(Vector3(0, 0, 0));
-}
-
-void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContainer::Quad> & quads)
+void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad> & quads)
 {
    ManualObject* & mesh = Meshes[z*Width*Height + y*Width + x];
 
-   std::cout << "\n\n-------------------------------------\nUpdateMesh(" << x << "," << y << "," << z << ") with " << quads.size() << " quads\n" << std::endl;
+   //std::cout << "\n\n-------------------------------------\nUpdateMesh(" << x << "," << y << "," << z << ") with " << quads.size() << " quads\n" << std::endl;
    
    if (quads.empty())
    {
@@ -509,18 +455,32 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContai
    }
 
    unsigned int i = 0;
-   for (const VoxelContainer::Quad & q : quads)
+   for (const Model::Quad & q : quads)
    {
+      float d = random(-0.1,0.1);
+      
+      ColourValue colour(0.45+d, 0.42+d, 0.31+d);
+      /*if (q.Normal.x != 0 or q.Normal.z != 0 or q.Normal.y == -1) {
+         colour = ColourValue(0.45,0.42,0.31);
+      }
+      else {
+         colour = ColourValue(0.17,0.37,0.04);
+         }*/
+      
       mesh->position(q.A);
+      mesh->colour(colour);
       mesh->normal(q.Normal);
 
       mesh->position(q.B);
+      mesh->colour(colour);
       mesh->normal(q.Normal);
 
       mesh->position(q.C);
+      mesh->colour(colour);
       mesh->normal(q.Normal);
 
       mesh->position(q.D);
+      mesh->colour(colour);
       mesh->normal(q.Normal);
 
       mesh->index(i);
@@ -540,6 +500,8 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContai
 
 int main()
 {
+   srand(time(NULL));
+   
    App app;
    app.Go();
    

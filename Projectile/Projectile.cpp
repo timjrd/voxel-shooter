@@ -1,4 +1,3 @@
-
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 #include <OgreVector3.h>
@@ -9,7 +8,8 @@
 
 #include "Projectile.hh"
 
-Projectile::Projectile(Ogre::Vector3 playerPosition,  Ogre::Quaternion orientation, Ogre::SceneManager *sceneMgr, Ogre::Real projectileId)
+Projectile::Projectile(Ogre::Vector3 playerPosition,  Ogre::Quaternion orientation, Ogre::SceneManager *sceneMgr,
+                       Ogre::Real projectileId)
 {	
 	std::stringstream nomComplet;
 	nomComplet << "Projectile" << projectileId;
@@ -18,9 +18,9 @@ Projectile::Projectile(Ogre::Vector3 playerPosition,  Ogre::Quaternion orientati
 	
 	// BillBoard
 	projectileBbs = sceneMgr->createBillboardSet(uniqueName);
-	projectileBbs->setDefaultDimensions(5, 5);
+    projectileBbs->setDefaultDimensions(2, 2);
 	projectileBbs->setMaterialName("Examples/Flare");
-	projectileBbs->createBillboard(0,0,0, Ogre::ColourValue::White);
+    projectileBbs->createBillboard(0,0,0, Ogre::ColourValue::Green);
 
 	time = 0;
 	projectileVelocity = 500.f;
@@ -32,11 +32,11 @@ Projectile::Projectile(Ogre::Vector3 playerPosition,  Ogre::Quaternion orientati
 
     Ogre::RibbonTrail *mTrail = sceneMgr->createRibbonTrail(uniqueName);
     mTrail->setMaterialName("Examples/LightRibbonTrail");
-    mTrail->setTrailLength(4000);
+    mTrail->setTrailLength(300);
     mTrail->setInitialColour(0, 0.0, 1.0, 0.0);
     mTrail->setColourChange(0, 0.5, 0.5, 0.5, 0.5);
     mTrail->setMaxChainElements(20);
-    mTrail->setInitialWidth(0, 1);
+    mTrail->setInitialWidth(0, 0.5);
     mTrail->addNode(projectileNode);
     sceneMgr->getRootSceneNode()->attachObject(mTrail);
 }
@@ -57,7 +57,8 @@ bool Projectile::Update(float timeSinceLastFrame)
 	if(time > 5) 
 		return false;
 
-	projectileNode->setPosition(projectileNode->getPosition() + projectileNode->getOrientation() * Ogre::Vector3(0.0f,0.0f,-1.0f * projectileVelocity * timeSinceLastFrame));
+    projectileNode->setPosition(projectileNode->getPosition() + projectileNode->getOrientation() *
+                                            Ogre::Vector3(0.0f,0.0f,-1.0f * projectileVelocity * timeSinceLastFrame));
 
 	return true;
 
