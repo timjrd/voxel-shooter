@@ -10,5 +10,19 @@ material voxel
             diffuse  vertexcolour
             specular vertexcolour
         }
+
+        pass
+        {
+            lighting on
+            start_light 8
+            max_lights 1000
+            iteration 1 per_n_lights 8
+            scene_blend add
+            
+            ambient  vertexcolour
+            diffuse  vertexcolour
+            specular vertexcolour
+        }
+
     }
 }

@@ -23,8 +23,9 @@ class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public
    size_t Depth;
    size_t MeshSize;
    
-	Projectile *ProjectileArray[20000];
-	int fireId = 0;
+   Projectile *ProjectileArray[20000];
+   int fireId = 0;
+   Ogre::Timer LastShot;
 
    Ogre::Root* Root = nullptr;
    Ogre::RenderWindow* Window = nullptr;

@@ -83,7 +83,9 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
        PlayerNode->pitch(d, Node::TS_LOCAL);
 
 
-     if (Mouse->getMouseState().buttonDown(OIS::MB_Left)) {
+    if (Mouse->getMouseState().buttonDown(OIS::MB_Left) and LastShot.getMilliseconds() >= 150) {
+       LastShot.reset();
+        
         ProjectileArray[fireId] = new Projectile(YawNode->getPosition() + PlayerNode->_getDerivedOrientation() * Vector3(1,0,1),
                                                  PlayerNode->_getDerivedOrientation(), SceneMgr, fireId);
 		fireId += 1;

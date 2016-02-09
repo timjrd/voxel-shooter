@@ -61,7 +61,7 @@ bool Projectile::Update(float timeSinceLastFrame)
 	time += timeSinceLastFrame;
 	
 	if(time > 5) 
-		return false;
+           return false;
 
         projectileNode->setPosition(projectileNode->getPosition() + projectileNode->getOrientation() *
                                     Ogre::Vector3(0.0f,0.0f,-1.0f * projectileVelocity * timeSinceLastFrame));
