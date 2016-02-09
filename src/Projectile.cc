@@ -18,43 +18,42 @@ Projectile::Projectile(Ogre::Vector3 playerPosition,  Ogre::Quaternion orientati
 	this->sceneMgr = sceneMgr;
 	
 	// BillBoard
-	projectileBbs = sceneMgr->createBillboardSet(uniqueName);
-    projectileBbs->setDefaultDimensions(2, 2);
+	projectileBbs = sceneMgr->createBillboardSet();
+        projectileBbs->setDefaultDimensions(2, 2);
 	projectileBbs->setMaterialName("Examples/Flare");
-    projectileBbs->createBillboard(0,0,0, Ogre::ColourValue::Green);
+        projectileBbs->createBillboard(0,0,0, Ogre::ColourValue::Green);
 
 	time = 0;
 	projectileVelocity = 500.f;
 
-	projectileNode = sceneMgr->getRootSceneNode()->createChildSceneNode(uniqueName, playerPosition);
+	projectileNode = sceneMgr->getRootSceneNode()->createChildSceneNode(playerPosition);
 	projectileNode->setOrientation(orientation);
 
 	//projectileNode->attachObject(projectileBbs);
 
-    Ogre::RibbonTrail *mTrail = sceneMgr->createRibbonTrail(uniqueName);
-    mTrail->setMaterialName("Examples/LightRibbonTrail");
-    mTrail->setTrailLength(50);
-    mTrail->setInitialColour(0, 0.0, 1.0, 0.0);
-    mTrail->setColourChange(0, 0.5, 0.5, 0.5, 0.5);
-    mTrail->setMaxChainElements(20);
-    mTrail->setInitialWidth(0, 0.5);
-    mTrail->addNode(projectileNode);
-    sceneMgr->getRootSceneNode()->attachObject(mTrail);
+        Trail = sceneMgr->createRibbonTrail();
+        Trail->setMaterialName("Examples/LightRibbonTrail");
+        Trail->setTrailLength(50);
+        Trail->setInitialColour(0, 0.0, 1.0, 0.0);
+        Trail->setColourChange(0, 0.5, 0.5, 0.5, 0.5);
+        Trail->setMaxChainElements(20);
+        Trail->setInitialWidth(0, 0.5);
+        Trail->addNode(projectileNode);
+        sceneMgr->getRootSceneNode()->attachObject(Trail);
 
 
-    Ogre::Light* light = sceneMgr->createLight();
-    light->setDiffuseColour(0, 1, 0);
-    setLightAttenuation(*light, 50);
-    projectileNode->attachObject(light);
+        Light = sceneMgr->createLight();
+        Light->setDiffuseColour(0, 1, 0);
+        setLightAttenuation(*Light, 40);
+        projectileNode->attachObject(Light);
 }
 
 Projectile::~Projectile() 
 {
-	projectileBbs = nullptr;
-	projectileNode = nullptr;
-	sceneMgr->destroyBillboardSet(uniqueName);
-	sceneMgr->destroySceneNode(uniqueName);
-	sceneMgr = nullptr;
+	sceneMgr->destroyBillboardSet(projectileBbs);
+        sceneMgr->destroyRibbonTrail(Trail);
+	sceneMgr->destroySceneNode(projectileNode);
+        sceneMgr->destroyLight(Light);
 }
 
 bool Projectile::Update(float timeSinceLastFrame)
@@ -64,8 +63,8 @@ bool Projectile::Update(float timeSinceLastFrame)
 	if(time > 5) 
 		return false;
 
-    projectileNode->setPosition(projectileNode->getPosition() + projectileNode->getOrientation() *
-                                            Ogre::Vector3(0.0f,0.0f,-1.0f * projectileVelocity * timeSinceLastFrame));
+        projectileNode->setPosition(projectileNode->getPosition() + projectileNode->getOrientation() *
+                                    Ogre::Vector3(0.0f,0.0f,-1.0f * projectileVelocity * timeSinceLastFrame));
 
 	return true;
 

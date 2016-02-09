@@ -14,13 +14,15 @@ private:
 
 	Ogre::SceneNode *projectileNode;
 	Ogre::BillboardSet *projectileBbs;
+        Ogre::RibbonTrail * Trail;
+        Ogre::Light * Light;
 	Ogre::SceneManager *sceneMgr;
 	Ogre::Real projectileVelocity;
 	Ogre::String uniqueName;
 	float time;
 
 public:
-    Projectile(Ogre::Vector3 playerPosition, Ogre::Quaternion orientation, Ogre::SceneManager *sceneMgr, Ogre::Real projectileId);
+        Projectile(Ogre::Vector3 playerPosition, Ogre::Quaternion orientation, Ogre::SceneManager *sceneMgr, Ogre::Real projectileId);
 	~Projectile();
 
 	bool Update(float timeSinceLastFrame);

@@ -396,12 +396,13 @@ bool App::Go()
    Voxels->Generate(MeshSize,Width,Height,Depth,seed);
 
    std::cout << "\n\n-------------------------\nNB QUADS: " << NbQuads << "\n-------------------------\n\n";
+   std::cout << "\n\n-------------------------\nAVG QUADS PER SECTION: " << NbQuads/(Width*Height*Depth) << "\n-------------------------\n\n";
 
    SceneMgr->setAmbientLight(Ogre::ColourValue(0, 0, 0));
    //SceneMgr->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED);
    
-	for(int i=0; i<20000; i++)
-		ProjectileArray[i] = nullptr;	
+   for(int i=0; i<20000; i++)
+      ProjectileArray[i] = nullptr;	
 
 
    Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
