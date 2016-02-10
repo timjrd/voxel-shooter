@@ -1,0 +1,37 @@
+#
+# Décrit les fichiers ignorés par git
+#
+
+# Fichiers temporaires/de sauvegarde auto...
+*.autosave
+*~
+\#*#
+
+# Fichiers cachés
+.*
+!.gitignore
+
+# NFS/Apache de l'IUT
+*.m2
+.nfs*
+
+# Fichiers générés (compilation/objets...)
+*.o
+*.d
+/Builds
+
+# CMake
+Makefile
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+compile_commands.sh
+
+# Qt Creator
+CMakeLists.txt.user
+
+# Ogre3D
+/dist/bin/*
+!/dist/bin/plugins.cfg
+!/dist/bin/resources.cfg
