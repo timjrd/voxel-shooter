@@ -28,7 +28,6 @@ App::~App()
       //if (Meshes[i])
          //SceneMgr->destroyManualObject(Meshes[i]);
 
-   delete [] Meshes;
    delete Root;
    delete Voxels;
 }
@@ -185,9 +184,7 @@ bool App::Go()
    Width = Height = Depth = 10;
    Voxels = new Model(MeshSize, Width, Height, Depth, this);
 
-   Meshes = new Ogre::ManualObject*[Width*Height*Depth];
-   for (size_t i=0; i<Width*Height*Depth; i++)
-      Meshes[i] = nullptr;
+   Meshes.resize(Width*Height*Depth, {nullptr,nullptr});
    
    Ogre::ConfigFile cf;
    cf.load(ResourcesCfg);
@@ -434,8 +431,10 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad
 {
    NbQuads += quads.size(); // this is a hack :)
 
-   
-   ManualObject* & mesh = Meshes[z*Width*Height + y*Width + x];
+
+   auto & p = Meshes[z*Width*Height + y*Width + x];
+   SceneNode*    & node = p.first;
+   ManualObject* & mesh = p.second;
 
    //std::cout << "\n\n-------------------------------------\nUpdateMesh(" << x << "," << y << "," << z << ") with " << quads.size() << " quads\n" << std::endl;
    
@@ -444,7 +443,10 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad
       if (mesh)
       {
          SceneMgr->destroyManualObject(mesh);
+         SceneMgr->destroySceneNode(node);
+
          mesh = nullptr;
+         node = nullptr;
       }
          
       return;
@@ -453,7 +455,9 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad
    if (mesh == nullptr)
    {
       mesh = SceneMgr->createManualObject();
-      SceneMgr->getRootSceneNode()->attachObject(mesh);
+      node = SceneMgr->getRootSceneNode()->createChildSceneNode();
+      node->attachObject(mesh);
+
       mesh->setDynamic(false);
       mesh->begin("voxel", RenderOperation::OT_TRIANGLE_LIST);
    }
@@ -503,6 +507,13 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad
    }
 
    mesh->end();
+
+   const Vector3 min(x*MeshSize, y*MeshSize, z*MeshSize);
+   const Vector3 max = min + MeshSize;
+   //mesh->setBoundingBox(AxisAlignedBox(min, max));
+   
+   const AxisAlignedBox& box = mesh->getWorldBoundingBox();
+   std::cout << box.getMinimum() << "  -->  " << box.getMaximum() << std::endl;
 }
 
 

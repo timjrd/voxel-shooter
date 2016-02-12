@@ -13,11 +13,14 @@
 #include <OISKeyboard.h>
 #include <OISMouse.h>
 
+#include <vector>
+#include <tuple>
+
 class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public Model::MeshListener
 {
   private:
    Model * Voxels = nullptr;
-   Ogre::ManualObject ** Meshes = nullptr;
+   std::vector<std::pair<Ogre::SceneNode*, Ogre::ManualObject*>> Meshes;
    size_t Width;
    size_t Height;
    size_t Depth;
