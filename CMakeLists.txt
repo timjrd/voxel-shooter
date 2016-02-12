@@ -1,4 +1,3 @@
-#/*
 #-----------------------------------------------------------------------------
 #Filename:    CMakeLists.txt
 #-----------------------------------------------------------------------------
@@ -30,7 +29,7 @@ endif(WIN32)
 if(UNIX)
 	if(EXISTS "/usr/local/lib/OGRE/cmake")
 
-	  set(CMAKE_MODULE_PATH "/usr/local/lib/OGRE/cmake/;${CMAKE_MODULE_PATH}")
+          set(CMAKE_MODULE_PATH "/usr/local/lib/OGRE/cmake/;${CMAKE_MODULE_PATH}")
 	  set(OGRE_SAMPLES_INCLUDEPATH "/usr/local/share/OGRE/samples/Common/include/") # We could just *assume* that developers uses this basepath : /usr/local
 
 	elseif(EXISTS "/usr/lib/OGRE/cmake")
@@ -38,9 +37,7 @@ if(UNIX)
 	  set(CMAKE_MODULE_PATH "/usr/lib/OGRE/cmake/;${CMAKE_MODULE_PATH}")
 	  set(OGRE_SAMPLES_INCLUDEPATH "/usr/share/OGRE/samples/Common/include/") # Otherwise, this one
 
-        #else ()
-	  #message(SEND_ERROR "Failed to find module path.")
-	endif(EXISTS "/usr/local/lib/OGRE/cmake")
+        endif()
 endif(UNIX)
  
 if (CMAKE_BUILD_TYPE STREQUAL "")
@@ -64,7 +61,7 @@ find_package(OIS REQUIRED)
 if(NOT OIS_FOUND)
 	message(SEND_ERROR "Failed to find OIS.")
 endif()
- 
+
 # Find Boost
 if (NOT OGRE_BUILD_PLATFORM_IPHONE)
 	if (WIN32 OR APPLE)
@@ -95,7 +92,19 @@ if (NOT OGRE_BUILD_PLATFORM_IPHONE)
 	add_definitions(-DBOOST_ALL_NO_LIB)
 	set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${Boost_LIBRARIES})
 endif()
- 
+
+
+find_package(CEGUI REQUIRED)
+if(NOT CEGUI_FOUND)
+	message(SEND_ERROR "Failed to find CEGUI.")
+endif()
+
+find_package(CEGUIOGRE REQUIRED)
+if(NOT CEGUIOGRE_FOUND)
+	message(SEND_ERROR "Failed to find CEGUIOGRE.")
+endif()
+
+
 set(HDRS
   ./src/App.hh
   ./src/Model.hh
@@ -114,13 +123,22 @@ include_directories( ${OIS_INCLUDE_DIRS}
 	${OGRE_INCLUDE_DIRS}
 	${OGRE_SAMPLES_INCLUDEPATH}
 	${OGRE_Overlay_INCLUDE_DIRS}
+	${CEGUI_INCLUDE_DIRS} 
+	${CEGUIOGRE_INCLUDE_DIRS}
 )
+
  
 add_executable(OgreApp WIN32 ${HDRS} ${SRCS})
  
 set_target_properties(OgreApp PROPERTIES DEBUG_POSTFIX _d)
  
-target_link_libraries(OgreApp ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${OGRE_Overlay_LIBRARIES})
+target_link_libraries(OgreApp 
+		${OGRE_LIBRARIES} 
+		${OIS_LIBRARIES} 
+		${OGRE_Overlay_LIBRARIES} 
+		${CEGUI_LIBRARY} 
+		${CEGUIOGRE_LIBRARY_OPTIMIZED} 
+)
  
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/bin)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/media)

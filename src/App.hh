@@ -13,6 +13,8 @@
 #include <OISKeyboard.h>
 #include <OISMouse.h>
 
+#include <CEGUI/CEGUI.h>
+
 #include <vector>
 #include <tuple>
 
@@ -25,6 +27,8 @@ class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public
    size_t Height;
    size_t Depth;
    size_t MeshSize;
+
+	CEGUI::Window *fpsViewer;
    
    Projectile *ProjectileArray[20000];
    int fireId = 0;

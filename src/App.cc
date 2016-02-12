@@ -9,6 +9,9 @@
 #include <OgreWindowEventUtilities.h>
 #include <OgreManualObject.h>
 
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/RendererModules/Ogre/Renderer.h>
+
 #include <iostream>
 
 using namespace Ogre;
@@ -135,7 +138,10 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
     
     if (NbFrame == 40)
     {
-       std::cout << (int) (1/(FrameDurationSum / NbFrame)) << " FPS" << std::endl;
+       //std::cout << (int) (1/(FrameDurationSum / NbFrame)) << " FPS" << std::endl;
+		 std::ostringstream n;
+		 n << "FPS : " << (int) (1/(FrameDurationSum / NbFrame));
+		 fpsViewer->setText(n.str());
 
        NbFrame = 0;
        FrameDurationSum = 0;
@@ -402,6 +408,37 @@ bool App::Go()
    
    for(int i=0; i<20000; i++)
       ProjectileArray[i] = nullptr;	
+
+	/****************************** BEGINNING OF CEGUI *******************************************************/ 
+
+   CEGUI::OgreRenderer& myRenderer = CEGUI::OgreRenderer::bootstrapSystem(); 
+
+   CEGUI::SchemeManager::getSingleton().createFromFile( "TaharezLook.scheme" );
+   CEGUI::FontManager::getSingleton().createFromFile( "DejaVuSans-10.font" );
+
+   CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultFont( "DejaVuSans-10" );
+   CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage( "TaharezLook/MouseArrow" );
+   CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultTooltipType( "TaharezLook/Tooltip" );
+
+	CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
+	CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+
+	//CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+	//quit->setText("MyButton Quit");
+	//quit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+
+	fpsViewer = wmgr.createWindow("TaharezLook/Label", "CEGUIDemo/FpsLabel");
+	fpsViewer->setText("FPS : ");
+	fpsViewer->setSize(CEGUI::USize(CEGUI::UDim(0.10,0), CEGUI::UDim(0.05, 0)));
+	fpsViewer->setPosition(CEGUI::UVector2(CEGUI::UDim(0.90,0), CEGUI::UDim(0,5)));
+
+	sheet->addChild(fpsViewer);
+	//sheet->addChild(quit);
+	CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+
+
+	/********************************** CEGUI ENDED *********************************************************/
+
 
 
    Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
