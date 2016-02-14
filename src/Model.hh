@@ -7,16 +7,6 @@
 #include <algorithm>
 #include <vector>
 
-class Random
-{
-private:
-   unsigned long long Previous;
-
-public:
-   Random(unsigned long long seed);
-   
-   int Next(int min, int max);
-};
 
 class Model
 {

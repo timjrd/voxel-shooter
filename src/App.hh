@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Model.hh"
+#include "VoxelContainer.hh"
 #include "Projectile.hh"
 
 #include <OgreRoot.h>
@@ -18,10 +18,10 @@
 #include <vector>
 #include <tuple>
 
-class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public Model::MeshListener
+class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public VoxelContainer::MeshListener
 {
   private:
-   Model * Voxels = nullptr;
+   VoxelContainer Voxels;
    std::vector<std::pair<Ogre::SceneNode*, Ogre::ManualObject*>> Meshes;
    size_t Width;
    size_t Height;
@@ -69,5 +69,5 @@ class App : public Ogre::WindowEventListener, public Ogre::FrameListener, public
  
    bool Go();
 
-   void UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad> &) override;
+   void UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContainer::Quad> &) override;
 };

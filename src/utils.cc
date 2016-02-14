@@ -12,3 +12,19 @@ void setLightAttenuation(Ogre::Light & light, const float range)
    light.setAttenuation(range,K,L,q);
 }
 
+int linearInterpolation(int from, int to, int x, int xMax)
+{
+   return ((to-from) * x)/xMax + from;
+}
+
+Random::Random(unsigned long long seed)
+   : Previous(seed)
+{}
+   
+int Random::Next(int min, int max)
+{
+   Previous = (1103515245 * Previous + 12345) % 2147483648;
+
+   return (Previous % (max-min+1)) + min;
+}
+

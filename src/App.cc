@@ -17,7 +17,8 @@
 using namespace Ogre;
 
 App::App()
-   : ResourcesCfg(Ogre::StringUtil::BLANK)
+   : Voxels(this)
+   , ResourcesCfg(Ogre::StringUtil::BLANK)
    , PluginsCfg(Ogre::StringUtil::BLANK)
 {
 }
@@ -32,7 +33,6 @@ App::~App()
          //SceneMgr->destroyManualObject(Meshes[i]);
 
    delete Root;
-   delete Voxels;
 }
 
 //Adjust mouse clipping area
@@ -93,8 +93,8 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		fireId += 1;
 		//std::cout << "FIRE ID **** *" << fireId << std::endl;;
 	}
-    else if (Mouse->getMouseState().buttonDown(OIS::MB_Right))
-       Voxels->SetSphere(AlterNode->_getDerivedPosition(), 6, false);
+    //else if (Mouse->getMouseState().buttonDown(OIS::MB_Right))
+    //Voxels->SetSphere(AlterNode->_getDerivedPosition(), 6, true);
     
 	for(int n =0; n< 20000; n++) 
 	{
@@ -164,13 +164,13 @@ void App::Translate(Vector3 dir)
    const Vector3 y(0,t.y,0);
    const Vector3 z(0,0,t.z);
 
-   if (not Voxels->BoxIntersects(pos+z - d, pos+z + d))
+   if (not Voxels.BoxIntersects(pos+z - d, pos+z + d))
       pos += z;
    
-   if (not Voxels->BoxIntersects(pos+x - d, pos+x + d))
+   if (not Voxels.BoxIntersects(pos+x - d, pos+x + d))
       pos += x;
    
-   if (not Voxels->BoxIntersects(pos+y - d, pos+y + d))
+   if (not Voxels.BoxIntersects(pos+y - d, pos+y + d))
       pos += y;
 
    YawNode->setPosition(pos);
@@ -188,8 +188,6 @@ bool App::Go()
    
    MeshSize = 30;
    Width = Height = Depth = 10;
-   Voxels = new Model(MeshSize, Width, Height, Depth, this);
-
    Meshes.resize(Width*Height*Depth, {nullptr,nullptr});
    
    Ogre::ConfigFile cf;
@@ -239,7 +237,7 @@ bool App::Go()
    PlayerNode->attachObject(Camera);
 
    AlterNode = PlayerNode->createChildSceneNode();
-   AlterNode->setPosition(0,0,-100);
+   AlterNode->setPosition(0,0,-50);
    
    const float w = Width * MeshSize;
    const float h = Height * MeshSize;
@@ -389,16 +387,16 @@ bool App::Go()
 
    Ogre::Light* plight = SceneMgr->createLight("PlayerLight");
    plight->setDiffuseColour(1, 1, 1);
-   setLightAttenuation(*plight, 270);
+   setLightAttenuation(*plight, 280);
    PlayerNode->attachObject(plight);
 
    YawNode->setPosition(w/2, h/2, d/2);
    
    
    //Voxels->SetSphere(0,0,0,10,true);
-   const unsigned long long seed = 1454691946;//time(NULL);
+   const unsigned long long seed = time(NULL);
    std::cout << "\n\n-------------------------\nSEED: " << seed << "\n-------------------------\n\n";
-   Voxels->Generate(MeshSize,Width,Height,Depth,seed);
+   Voxels.Generate(MeshSize, Width*MeshSize, Height*MeshSize, Depth*MeshSize, seed, 15);
 
    std::cout << "\n\n-------------------------\nNB QUADS: " << NbQuads << "\n-------------------------\n\n";
    std::cout << "\n\n-------------------------\nAVG QUADS PER SECTION: " << NbQuads/(Width*Height*Depth) << "\n-------------------------\n\n";
@@ -464,7 +462,7 @@ bool App::Go()
 float random(float min, float max) {
    return (rand()/(float)RAND_MAX)*(max-min) + min;
 }
-void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad> & quads)
+void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<VoxelContainer::Quad> & quads)
 {
    NbQuads += quads.size(); // this is a hack :)
 
@@ -504,32 +502,22 @@ void App::UpdateMesh(size_t x, size_t y, size_t z, const std::vector<Model::Quad
    }
 
    unsigned int i = 0;
-   for (const Model::Quad & q : quads)
+   for (const VoxelContainer::Quad & q : quads)
    {
-      float d = random(-0.1,0.1);
-      
-      ColourValue colour(0.45+d, 0.42+d, 0.31+d);
-      /*if (q.Normal.x != 0 or q.Normal.z != 0 or q.Normal.y == -1) {
-         colour = ColourValue(0.45,0.42,0.31);
-      }
-      else {
-         colour = ColourValue(0.17,0.37,0.04);
-         }*/
-      
       mesh->position(q.A);
-      mesh->colour(colour);
+      mesh->colour(q.Colour);
       mesh->normal(q.Normal);
 
       mesh->position(q.B);
-      mesh->colour(colour);
+      mesh->colour(q.Colour);
       mesh->normal(q.Normal);
 
       mesh->position(q.C);
-      mesh->colour(colour);
+      mesh->colour(q.Colour);
       mesh->normal(q.Normal);
 
       mesh->position(q.D);
-      mesh->colour(colour);
+      mesh->colour(q.Colour);
       mesh->normal(q.Normal);
 
       mesh->index(i);

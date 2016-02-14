@@ -1,33 +1,67 @@
-#include "Model.hh"
+#include "VoxelContainer.hh"
 #include "utils.hh"
 
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
-
-Model::Model(size_t meshSize, size_t width, size_t height, size_t depth, MeshListener * listener)
-   : Listener(listener)
-   , Width(meshSize*width)
-   , Height(meshSize*height)
-   , Depth(meshSize*depth)
-   , MeshSize(meshSize)
+VoxelContainer::VoxelColour::VoxelColour(Random & r)
 {
-   Voxels.resize(Width*Height*Depth);
-   for (uint8_t & v : Voxels)
-      v = false;
+   Red   = r.Next(50,255);
+   Green = r.Next(50,255);
+   Blue  = r.Next(50,255);
+}
+VoxelContainer::VoxelColour VoxelContainer::VoxelColour::LinearInterpolationTo(const VoxelColour & o, int x, int xMax) const
+{
+   VoxelColour res;
+
+   res.Red   = linearInterpolation(Red  , o.Red  , x, xMax);
+   res.Green = linearInterpolation(Green, o.Green, x, xMax);
+   res.Blue  = linearInterpolation(Blue , o.Blue , x, xMax);
+
+   return res;
+}
+VoxelContainer::VoxelColour VoxelContainer::VoxelColour::Blend(const VoxelColour & o) const
+{
+   VoxelColour res;
+
+   res.Red   = ((int)Red   + (int)o.Red  ) / 2;
+   res.Green = ((int)Green + (int)o.Green) / 2;
+   res.Blue  = ((int)Blue  + (int)o.Blue ) / 2;
+
+   return res;
+}
+void VoxelContainer::VoxelColour::operator+=(int d)
+{
+   Red   = between(0, Red+d  , 255);
+   Green = between(0, Green+d, 255);
+   Blue  = between(0, Blue+d , 255);
+}
+Ogre::ColourValue VoxelContainer::VoxelColour::ToColourValue() const
+{
+   return Ogre::ColourValue(Red/(float)255, Green/(float)255, Blue/(float)255);
 }
 
-Model::~Model()
+
+VoxelContainer::VoxelContainer(MeshListener * listener)
+   : Listener(listener)
+{}
+VoxelContainer::~VoxelContainer()
 {}
 
-uint8_t & Model::at(size_t x, size_t y, size_t z, std::vector<uint8_t> & voxels, size_t width, size_t height, size_t depth)
+/*uint8_t & VoxelContainer::at(size_t x, size_t y, size_t z, std::vector<uint8_t> & voxels, size_t width, size_t height, size_t depth)
 {
    return voxels[z*width*height + y*width + x];
-}
-uint8_t & Model::At(size_t x, size_t y, size_t z)
+   }*/
+
+VoxelContainer::Voxel & VoxelContainer::At(size_t x, size_t y, size_t z)
 {
-   return at(x,y,z, Voxels, Width, Height, Depth);
+   return Voxels[z*Width*Height + y*Width + x];
+}
+bool VoxelContainer::FilledAt(size_t x, size_t y, size_t z)
+{
+   return At(x,y,z).Value;
 }
 
 
@@ -36,28 +70,53 @@ struct Cave {
    int vx, vy, vz, va, vb, vc;
    int nx, ny, nz, na, nb, nc;
 };
-void Model::Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed)
+void VoxelContainer::Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed, int minRadius)
 {
    MeshSize = meshSize;
-   Width    = MeshSize*width;
-   Height   = MeshSize*height;
-   Depth    = MeshSize*depth;
+   Width    = MeshSize * (width/MeshSize);
+   Height   = MeshSize * (height/MeshSize);
+   Depth    = MeshSize * (depth/MeshSize);
 
    Voxels.resize(Width*Height*Depth);
-   for (uint8_t & v : Voxels)
-      v = true;
 
-   //SetSphere(200,200,200,10,true); SetSphere(220,200,200,10,true); BlurThreshold(); UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1); return;
-   
    // --
-
+   
    Random random(seed);
+
+   const VoxelColour xStart(random);
+   const VoxelColour yStart(random);
+   const VoxelColour zStart(random);
+
+   const VoxelColour xEnd(random);
+   const VoxelColour yEnd(random);
+   const VoxelColour zEnd(random);
+
+   for (int x=0; x < Width; x++)
+      for (int y=0; y < Height; y++)
+         for (int z=0; z < Depth; z++)
+         {
+            Voxel & v = At(x,y,z);
+            v.Value = 255;
+            const VoxelColour xColour = xStart.LinearInterpolationTo(xEnd, x, Width-1);
+            const VoxelColour yColour = yStart.LinearInterpolationTo(yEnd, y, Height-1);
+            const VoxelColour zColour = zStart.LinearInterpolationTo(zEnd, z, Depth-1);
+
+            //VoxelColour colour = xColour.Blend(yColour).Blend(zColour);
+
+            VoxelColour colour;
+            colour.Red   = linearInterpolation(50, 200, x, Width-1);
+            colour.Green = linearInterpolation(50, 200, y, Height-1);
+            colour.Blue  = linearInterpolation(50, 200, z, Depth-1);
+            colour += random.Next(-20,20);
+            
+            v.Colour = colour;
+         }
    
-   const int iterations = 1200;
-   const int period = 20;
+   const int iterations = max(Width, max(Height, Depth)) * 4;
+   const int period = 5 + iterations/80;
    
-   const int maxRadius = 40;// min(Width, min(Height, Depth)) / 7;
-   const int minRadius = 15;
+   const int maxRadius = min(Width, min(Height, Depth)) / 7;
+   const int d = max(1, minRadius/3);
    
    std::vector<Cave> caves(1);
    for (Cave & c : caves)
@@ -66,9 +125,9 @@ void Model::Generate(size_t meshSize, size_t width, size_t height, size_t depth,
       c.y = Height/2;
       c.z = Depth/2;
       
-      c.nx = random.Next(-5,5);
-      c.ny = random.Next(-5,5);
-      c.nz = random.Next(-5,5);
+      c.nx = random.Next(-d,d);
+      c.ny = random.Next(-d,d);
+      c.nz = random.Next(-d,d);
 
       c.a = random.Next(minRadius,maxRadius);
       c.b = random.Next(minRadius,maxRadius);
@@ -95,9 +154,9 @@ void Model::Generate(size_t meshSize, size_t width, size_t height, size_t depth,
             c.vb = c.nb;
             c.vc = c.nc;
 
-            c.nx = random.Next(-5,5);
-            c.ny = random.Next(-5,5);
-            c.nz = random.Next(-5,5);
+            c.nx = random.Next(-d,d);
+            c.ny = random.Next(-d,d);
+            c.nz = random.Next(-d,d);
             
             c.na = random.Next(-5,5);
             c.nb = random.Next(-5,5);
@@ -107,25 +166,29 @@ void Model::Generate(size_t meshSize, size_t width, size_t height, size_t depth,
       
       for (Cave & c : caves)
       {
-         c.a = between(minRadius, c.a + ((c.na-c.va) * periodProgress)/100 + c.va, maxRadius);
-         c.b = between(minRadius, c.b + ((c.nb-c.vb) * periodProgress)/100 + c.vb, maxRadius);
-         c.c = between(minRadius, c.c + ((c.nc-c.vc) * periodProgress)/100 + c.vc, maxRadius);
+         c.a = between(minRadius, c.a + linearInterpolation(c.va, c.na, periodProgress, 100), maxRadius);
+         c.b = between(minRadius, c.b + linearInterpolation(c.vb, c.nb, periodProgress, 100), maxRadius);
+         c.c = between(minRadius, c.c + linearInterpolation(c.vc, c.nc, periodProgress, 100), maxRadius);
 
-         c.x = between(c.a+1, c.x + ((c.nx-c.vx) * periodProgress)/100 + c.vx, ((int)Width)-1-c.a-1);
-         c.y = between(c.b+1, c.y + ((c.ny-c.vy) * periodProgress)/100 + c.vy, ((int)Height)-1-c.b-1);
-         c.z = between(c.c+1, c.z + ((c.nz-c.vz) * periodProgress)/100 + c.vz, ((int)Depth)-1-c.c-1);
+         c.x = between(c.a+1, c.x + linearInterpolation(c.vx, c.nx, periodProgress, 100), ((int)Width)-1-c.a-1);
+         c.y = between(c.b+1, c.y + linearInterpolation(c.vy, c.ny, periodProgress, 100), ((int)Height)-1-c.b-1);
+         c.z = between(c.c+1, c.z + linearInterpolation(c.vz, c.nz, periodProgress, 100), ((int)Depth)-1-c.c-1);
 
-
-         DSetEllipsoid(c.x, c.y, c.z, c.a, c.b, c.c, false);
+         BrushEllipsoid(c.x, c.y, c.z, c.a, c.b, c.c);
       }
    }
 
-   //BlurThreshold();
+   //BrushEllipsoid(100, 100, 100, 50, 50, 50);
+   //BrushEllipsoid(160, 100, 100, 50, 50, 50);
    
+   for(Voxel & v : Voxels)
+      v.Value = (v.Value > 100);
+
    UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1);
 }
 
-void Model::BlurThreshold()
+/*
+void VoxelContainer::BlurThreshold()
 {
    const int blurSize  = 5;
    const int threshold = 4; // x / 10
@@ -164,15 +227,17 @@ void Model::BlurThreshold()
 
    Voxels = std::move(result);
 }
+*/
 
-void Model::SetSphere(Ogre::Vector3 pos, float r, bool set) {
+/*
+void VoxelContainer::SetSphere(Ogre::Vector3 pos, float r, bool set) {
    SetSphere(pos.x, pos.y, pos.z, r, set);
 }
-void Model::SetSphere(float cx, float cy, float cz, float r, bool set) {
+void VoxelContainer::SetSphere(float cx, float cy, float cz, float r, bool set) {
    SetEllipsoid(cx,cy,cz,r,r,r,set);
 }
 
-void Model::SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set)
+void VoxelContainer::SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set)
 {
    const int fromX = between(0, (int) (cx-a), ((int)Width)-1);
    const int fromY = between(0, (int) (cy-b), ((int)Height)-1);
@@ -198,8 +263,9 @@ void Model::SetEllipsoid(float cx, float cy, float cz, float a, float b, float c
 
    UpdateMeshes(fromX,fromY,fromZ,toX,toY,toZ);
 }
+*/
 
-void Model::DSetEllipsoid(int cx, int cy, int cz, int a, int b, int c, bool set)
+void VoxelContainer::BrushEllipsoid(int cx, int cy, int cz, int a, int b, int c)
 {
    const int fromX = between(0, cx-a, ((int)Width)-1);
    const int fromY = between(0, cy-b, ((int)Height)-1);
@@ -209,23 +275,25 @@ void Model::DSetEllipsoid(int cx, int cy, int cz, int a, int b, int c, bool set)
    const int toY = between(0, cy+b, ((int)Height)-1);
    const int toZ = between(0, cz+c, ((int)Depth)-1);
 
-   //std::cout << "DSetEllipsoid: " << fromX << "," << fromY << "," << fromZ << std::endl;
+   //std::cout << "BrushEllipsoid: " << fromX << "," << fromY << "," << fromZ << std::endl;
    
    for (int x=fromX; x<=toX; x++)
       for (int y=fromY; y<=toY; y++)
          for (int z=fromZ; z<=toZ; z++)
          {
-            const int tx = x - cx;
-            const int ty = y - cy;
-            const int tz = z - cz;
+            const long long tx = x - cx;
+            const long long ty = y - cy;
+            const long long tz = z - cz;
 
-            if ( (tx*tx*100)/(a*a) + (ty*ty*100)/(b*b) + (tz*tz*100)/(c*c) <= 100 )
-               At(x,y,z) = set;
+            const long long brush = max(0ll, 1000 - ((tx*tx*1000)/(a*a) + (ty*ty*1000)/(b*b) + (tz*tz*1000)/(c*c)));
+
+            uint8_t & value = At(x,y,z).Value;
+            value = max(0ll, (long long)value - (brush*brush*brush)/3921569);
          }
 }
 
 
-void Model::UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int toY, int toZ)
+void VoxelContainer::UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int toY, int toZ)
 {
    if (Listener)
       for (int x=fromX/MeshSize; x<=toX/MeshSize; x++)
@@ -240,75 +308,86 @@ void Model::UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int toY, int 
 }
 
 
-void Model::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Quad> & res)
+void VoxelContainer::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Quad> & res)
 {
    for(size_t x=mx*MeshSize; x < mx*MeshSize+MeshSize; x++)
       for(size_t y=my*MeshSize; y < my*MeshSize+MeshSize; y++)
          for(size_t z=mz*MeshSize; z < mz*MeshSize+MeshSize; z++)
-            if (At(x,y,z))
+         {
+            const Voxel & v = At(x,y,z);
+            if (v.Value)
             {
                const float fx = x;
                const float fy = y;
                const float fz = z;
+
+               Ogre::ColourValue colour = v.Colour.ToColourValue();
                
-               if (x>0 and not At(x-1,y,z)) {
+               if (x>0 and not FilledAt(x-1,y,z)) {
                   res.emplace_back();
                   res.back().A = {fx, fy  , fz  };
                   res.back().B = {fx, fy  , fz+1};
                   res.back().C = {fx, fy+1, fz+1};
                   res.back().D = {fx, fy+1, fz  };
                   res.back().Normal = {-1,0,0};
+                  res.back().Colour = colour;
                }
 
-               if (x<Width-1 and not At(x+1,y,z)) {
+               if (x<Width-1 and not FilledAt(x+1,y,z)) {
                   res.emplace_back();
                   res.back().A = {fx+1, fy  , fz  };
                   res.back().B = {fx+1, fy+1, fz  };
                   res.back().C = {fx+1, fy+1, fz+1};
                   res.back().D = {fx+1, fy  , fz+1};
                   res.back().Normal = {1,0,0};
+                  res.back().Colour = colour;
                }
 
-               if (y>0 and not At(x,y-1,z)) {
+               if (y>0 and not FilledAt(x,y-1,z)) {
                   res.emplace_back();
                   res.back().A = {fx  , fy, fz  };
                   res.back().B = {fx+1, fy, fz  };
                   res.back().C = {fx+1, fy, fz+1};
                   res.back().D = {fx  , fy, fz+1};
                   res.back().Normal = {0,-1,0};
+                  res.back().Colour = colour;
                }
 
-               if (y<Height-1 and not At(x,y+1,z)) {
+               if (y<Height-1 and not FilledAt(x,y+1,z)) {
                   res.emplace_back();
                   res.back().A = {fx  , fy+1, fz};
                   res.back().B = {fx  , fy+1, fz+1};
                   res.back().C = {fx+1, fy+1, fz+1};
                   res.back().D = {fx+1, fy+1, fz};
                   res.back().Normal = {0,1,0};
+                  res.back().Colour = colour;
                }
                
-               if (z>0 and not At(x,y,z-1)) {
+               if (z>0 and not FilledAt(x,y,z-1)) {
                   res.emplace_back();
                   res.back().A = {fx  , fy  , fz};
                   res.back().B = {fx  , fy+1, fz};
                   res.back().C = {fx+1, fy+1, fz};
                   res.back().D = {fx+1, fy  , fz};
                   res.back().Normal = {0,0,-1};
+                  res.back().Colour = colour;
                }
 
-               if (z<Depth-1 and not At(x,y,z+1)) {
+               if (z<Depth-1 and not FilledAt(x,y,z+1)) {
                   res.emplace_back();
                   res.back().A = {fx  , fy  , fz+1};
                   res.back().B = {fx+1, fy  , fz+1};
                   res.back().C = {fx+1, fy+1, fz+1};
                   res.back().D = {fx  , fy+1, fz+1};
                   res.back().Normal = {0,0,1};
+                  res.back().Colour = colour;
                }
             }
+         }
 }
 
 
-bool Model::BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max)
+bool VoxelContainer::BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max)
 {
    const int fromX = between(0, (int) min.x, ((int)Width)-1);
    const int fromY = between(0, (int) min.y, ((int)Height)-1);
@@ -321,7 +400,7 @@ bool Model::BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max)
    for (int x=fromX; x<=toX; x++)
       for (int y=fromY; y<=toY; y++)
          for (int z=fromZ; z<=toZ; z++)
-            if ( At(x,y,z)
+            if ( FilledAt(x,y,z)
                  and min.x < x+1 and max.x > x
                  and min.y < y+1 and max.y > y
                  and min.z < z+1 and max.z > z )
@@ -330,7 +409,7 @@ bool Model::BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max)
    return false;
 }
 
-bool Model::PointIntersects(Ogre::Vector3 pos)
+bool VoxelContainer::PointIntersects(Ogre::Vector3 pos)
 {
    const int x = pos.x;
    const int y = pos.y;
@@ -341,5 +420,5 @@ bool Model::PointIntersects(Ogre::Vector3 pos)
         or z < 0 or z > Depth-1 )
       return false;
 
-   else return At(x,y,z);
+   else return FilledAt(x,y,z);
 }
