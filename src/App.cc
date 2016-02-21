@@ -80,6 +80,10 @@ bool App::Init(const string & pluginsFile, const string & resourcesFile)
    Ogre::WindowEventUtilities::addWindowEventListener(Window, &MyController);
    Root->addFrameListener(&MyController);
 
+   Mouse->setBuffered(true);
+   Mouse->setEventCallback(&MyController);
+   //Keyboard->setEventCallback(&MyController);
+
    MyModel.Generate(30, 300, 300, 300, time(NULL));
    
    return true;

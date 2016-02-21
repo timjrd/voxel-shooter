@@ -36,37 +36,62 @@ void Controller::windowResized(Ogre::RenderWindow* rw)
 
 bool Controller::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
-    Keyboard->capture();
-    Mouse->capture();
+   Time = Timer.getMilliseconds() /(float) 1000;
+   
+   Keyboard->capture();
+   Mouse->capture();
  
-    if(Keyboard->isKeyDown(OIS::KC_ESCAPE))
-        return false;
+   if(Keyboard->isKeyDown(OIS::KC_ESCAPE))
+      return false;
 
-    MyModel->YawPlayer(-Mouse->getMouseState().X.rel*0.0015);
-    MyModel->PitchPlayer(-Mouse->getMouseState().Y.rel*0.0015);
-
-    Ogre::Vector3 translate(0,0,0);
+   Ogre::Vector3 translate(0,0,0);
     
-    if (Keyboard->isKeyDown(OIS::KC_Z) and not Keyboard->isKeyDown(OIS::KC_S))
-       translate.z = -1;
-    else if (Keyboard->isKeyDown(OIS::KC_S) and not Keyboard->isKeyDown(OIS::KC_Z))
-       translate.z = 1;
+   if (Keyboard->isKeyDown(OIS::KC_Z) and not Keyboard->isKeyDown(OIS::KC_S))
+      translate.z = -1;
+   else if (Keyboard->isKeyDown(OIS::KC_S) and not Keyboard->isKeyDown(OIS::KC_Z))
+      translate.z = 1;
 
-    if (Keyboard->isKeyDown(OIS::KC_Q) and not Keyboard->isKeyDown(OIS::KC_D))
-       translate.x = -1;
-    else if (Keyboard->isKeyDown(OIS::KC_D) and not Keyboard->isKeyDown(OIS::KC_Q))
-       translate.x = 1;
+   if (Keyboard->isKeyDown(OIS::KC_Q) and not Keyboard->isKeyDown(OIS::KC_D))
+      translate.x = -1;
+   else if (Keyboard->isKeyDown(OIS::KC_D) and not Keyboard->isKeyDown(OIS::KC_Q))
+      translate.x = 1;
 
-    if (Keyboard->isKeyDown(OIS::KC_SPACE) and not Keyboard->isKeyDown(OIS::KC_LSHIFT))
-       translate.y = 1;
-    else if (Keyboard->isKeyDown(OIS::KC_LSHIFT) and not Keyboard->isKeyDown(OIS::KC_SPACE))
-       translate.y = -1;
+   if (Keyboard->isKeyDown(OIS::KC_SPACE) and not Keyboard->isKeyDown(OIS::KC_LSHIFT))
+      translate.y = 1;
+   else if (Keyboard->isKeyDown(OIS::KC_LSHIFT) and not Keyboard->isKeyDown(OIS::KC_SPACE))
+      translate.y = -1;
 
-    translate.normalise();
+   translate.normalise();
+   MyModel->TranslatePlayer(translate * evt.timeSinceLastFrame * 40);
 
-    MyModel->TranslatePlayer(translate * evt.timeSinceLastFrame * 40);
-
-    MyView->OnFrame(Timer.getMilliseconds() /(float) 1000);
     
-    return true;
+   MyModel->Tick(Time);
+   MyView->OnFrame(Time);
+    
+   return true;
 }
+
+bool Controller::mouseMoved(const OIS::MouseEvent& me)
+{
+   MyModel->YawPlayer(-me.state.X.rel*0.0015);
+   MyModel->PitchPlayer(-me.state.Y.rel*0.0015);
+
+   return true;
+}
+
+bool Controller::mousePressed(const OIS::MouseEvent& me, OIS::MouseButtonID id)
+{
+   if (id == OIS::MB_Left)
+      MyModel->Fire(new FastProjectile(), Time, true);
+   else if (id == OIS::MB_Right)
+      MyModel->Fire(new FastProjectile(), Time, false);
+
+   return true;
+}
+
+bool Controller::mouseReleased(const OIS::MouseEvent& me, OIS::MouseButtonID id)
+{
+
+   return true;
+}
+

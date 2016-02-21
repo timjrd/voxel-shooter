@@ -1,4 +1,5 @@
 #include "Model.hh"
+#include "Projectile.hh"
 #include "utils.hh"
 
 #include <OgreMath.h>
@@ -81,6 +82,32 @@ Model::~Model()
 void Model::SetObserver(Observer * observer)
 {
    MyObserver = observer;
+}
+
+void Model::Tick(float time)
+{
+   for(auto i = Projectiles.begin(); i != Projectiles.end();)
+   {
+      if(not (*i)->Update(time))
+      {
+         delete (*i);
+         i = Projectiles.erase(i);
+      }
+      else
+         ++i;
+   }
+}
+
+void Model::Fire(Projectile* p, float time, bool left)
+{
+   Ogre::Vector3 x(1,0,0);
+   if (left) x *= -1;
+   x = MyPlayer.GetOrientation() * x;
+   
+   p->Init(*this, MyPlayer.Position + x, MyPlayer.GetDirection(), time);
+   MyObserver->ProjectileFired(*p);
+   
+   Projectiles.push_back(p);
 }
 
 void Model::SetPlayerPosition(const Ogre::Vector3 & pos)
@@ -299,6 +326,7 @@ void Model::SetSphere(float cx, float cy, float cz, float r, bool set) {
 void Model::SetVoxel(int x, int y, int z, bool set)
 {
    At(x,y,z).Value = set;
+   UpdateMeshes(x-1, y-1, z-1, x+1, y+1, z+1);
 }
 void Model::SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set)
 {
@@ -321,7 +349,7 @@ void Model::SetEllipsoid(float cx, float cy, float cz, float a, float b, float c
             const float tz = z+0.5 - cz;
 
             if ( (tx*tx)/(a*a) + (ty*ty)/(b*b) + (tz*tz)/(c*c) <= 1 )
-               SetVoxel(x,y,z,set);
+               At(x,y,z).Value = set;
          }
 
    UpdateMeshes(fromX,fromY,fromZ,toX,toY,toZ);

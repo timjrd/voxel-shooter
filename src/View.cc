@@ -56,7 +56,7 @@ void View::Init(Ogre::Root & root, Ogre::RenderWindow & window)
    //quit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
 
    FpsViewer = wmgr.createWindow("TaharezLook/Label", "CEGUIDemo/FpsLabel");
-   FpsViewer->setText("FPS : ");
+   FpsViewer->setText("FPS");
    FpsViewer->setSize(CEGUI::USize(CEGUI::UDim(0.10,0), CEGUI::UDim(0.05, 0)));
    FpsViewer->setPosition(CEGUI::UVector2(CEGUI::UDim(0.90,0), CEGUI::UDim(0,5)));
 

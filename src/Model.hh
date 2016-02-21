@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <vector>
+#include <list>
 
 class Projectile;
 
@@ -81,6 +82,8 @@ private:
 
    Player MyPlayer;
    float  PlayerSize = 3;
+
+   std::list<Projectile*> Projectiles;
    
    std::vector<Voxel> Voxels;
    long Width  = 0;
@@ -102,11 +105,15 @@ public:
 
    void SetObserver(Observer *);
 
+   void Tick(float time);
+
+   void Fire(Projectile*, float time, bool left);
+   
    void TranslatePlayer(const Ogre::Vector3 &);
    void SetPlayerPosition(const Ogre::Vector3 &);
    void YawPlayer(float);
    void PitchPlayer(float);
-   
+
    void Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed);
 
    //static uint8_t & at(size_t x, size_t y, size_t z, std::vector<uint8_t> & voxels, size_t width, size_t height, size_t depth);

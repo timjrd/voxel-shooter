@@ -8,39 +8,51 @@
 
 class Model;
 
+// Projectile interface
 class Projectile
 {
 public:
-   virtual ~Projectile();
+   virtual ~Projectile() {};
    
-   virtual void Init(Model &, const Ogre::Vector3 & pos, const Ogre::Vector3 & dir) = 0;
+   virtual void Init(Model &, const Ogre::Vector3 & pos, const Ogre::Vector3 & dir, float time) = 0;
    virtual void InitView(Ogre::SceneManager &) = 0;
    virtual bool Update(float time) = 0;
 };
 
-/*
+// Base projectile class
 class LaserProjectile : public Projectile
 {
+protected:
+   Ogre::SceneManager * SceneManager;
+   Ogre::SceneNode    * Node;
+   Ogre::RibbonTrail  * Trail;
+   Ogre::Light        * Light;
 
-private:
+   Ogre::ColourValue Colour;
 
-	Ogre::SceneNode *projectileNode;
-	Ogre::BillboardSet *projectileBbs;
-        Ogre::RibbonTrail * Trail;
-        Ogre::Light * Light;
-	Ogre::SceneManager *sceneMgr;
-	Ogre::Real projectileVelocity;
-	Ogre::String uniqueName;
-	float time;
+   //Ogre::BillboardSet *projectileBbs;
+
+   float FiredAt;
+
+   Ogre::Vector3 FiredFrom;
+   Ogre::Vector3 FiredTo;
+
+   Model * MyModel;
 
 public:
-        Projectile(Ogre::Vector3 playerPosition, Ogre::Quaternion orientation, Ogre::SceneManager *sceneMgr, Ogre::Real projectileId);
-	~Projectile();
+   LaserProjectile(const Ogre::ColourValue &);
+   ~LaserProjectile() override;
 
-	bool Update(float timeSinceLastFrame);
+   void Init(Model &, const Ogre::Vector3 & pos, const Ogre::Vector3 & dir, float time) override;
+   void InitView(Ogre::SceneManager &) override;
 };
-*/
 
 
+class FastProjectile : public LaserProjectile
+{
+public:
+   FastProjectile();
+   bool Update(float time) override;
+};
  
 
