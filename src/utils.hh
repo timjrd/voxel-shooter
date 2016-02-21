@@ -1,6 +1,11 @@
 #pragma once
 
+#include <OgreMath.h>
 #include <OgreLight.h>
+
+//typedef long long integer;
+
+const float PI = Ogre::Math::PI;
 
 void setLightAttenuation(Ogre::Light & light, const float range);
 int linearInterpolation(int from, int to, int x, int xMax);

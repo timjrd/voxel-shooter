@@ -1,5 +1,4 @@
-#ifndef PROJECTILE_H_
-#define PROJECTILE_H_
+#pragma once
 
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
@@ -7,7 +6,20 @@
 #include <OgreBillboardSet.h>
 #include <OgreString.h>
 
-class Projectile 
+class Model;
+
+class Projectile
+{
+public:
+   virtual ~Projectile();
+   
+   virtual void Init(Model &, const Ogre::Vector3 & pos, const Ogre::Vector3 & dir) = 0;
+   virtual void InitView(Ogre::SceneManager &) = 0;
+   virtual bool Update(float time) = 0;
+};
+
+/*
+class LaserProjectile : public Projectile
 {
 
 private:
@@ -27,9 +39,7 @@ public:
 
 	bool Update(float timeSinceLastFrame);
 };
-
-
-#endif
+*/
 
 
  

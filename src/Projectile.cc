@@ -8,7 +8,7 @@
 #include <OgreBillboardSet.h>
 #include <OgreEntity.h>
 #include <OgreRibbonTrail.h>
-
+/*
 Projectile::Projectile(Ogre::Vector3 playerPosition,  Ogre::Quaternion orientation, Ogre::SceneManager *sceneMgr,
                        Ogre::Real projectileId)
 {	
@@ -70,7 +70,7 @@ bool Projectile::Update(float timeSinceLastFrame)
 
 }
 
-
+*/
 
 
 

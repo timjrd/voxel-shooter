@@ -109,15 +109,19 @@ endif()
 set(HDRS
   ./src/App.hh
   ./src/Model.hh
-  ./src/VoxelContainer.hh
+  ./src/View.hh
+  ./src/Controller.hh
   ./src/Projectile.hh
   ./src/utils.hh
 )
  
 set(SRCS
+  ./src/main.cc
+  
   ./src/App.cc
   ./src/Model.cc
-  ./src/VoxelContainer.cc
+  ./src/View.cc
+  ./src/Controller.cc
   ./src/Projectile.cc
   ./src/utils.cc
 )
