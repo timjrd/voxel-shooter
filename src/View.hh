@@ -40,6 +40,7 @@ public:
    
    void OnFrame(float time);
 
+   void UpdateChargeur(int chargeur, int total);
    void ProjectileFired(Projectile &) override;
    void UpdatePlayer(const Ogre::Vector3 & pos, const Ogre::Quaternion & orientation) override;
    void UpdateSize(long meshSize, long width, long height, long depth) override;

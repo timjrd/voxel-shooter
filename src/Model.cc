@@ -31,6 +31,43 @@ Ogre::Quaternion Model::Player::GetOrientation() const
 }
 
 
+void Model::Player::Decremente(float degats)
+{
+    Vie -= degats;
+    if(GetVie() < 0)
+        Vie = 0;
+}
+
+void Model::Player::Recharger(Model::Observer *ob)
+{
+   if(NbMunitions > 0)
+   {
+        int manquant = QuantiteChargeur - ChargeurEnCours;
+        if(NbMunitions <= manquant) {
+            ChargeurEnCours += NbMunitions;
+            NbMunitions = 0;
+        }
+        else
+        {
+           NbMunitions -= manquant;
+           ChargeurEnCours = QuantiteChargeur;
+        }
+        ob->UpdateChargeur(ChargeurEnCours, NbMunitions);
+   }
+}
+
+void Model::Player::InitChargeur()
+{
+    ChargeurEnCours = QuantiteChargeur;
+    NbMunitions -= QuantiteChargeur;
+
+}
+
+void Model::RechargeArmePlayer()
+{
+    MyPlayer.Recharger(MyObserver);
+}
+
 Model::VoxelColour::VoxelColour(Random & r)
 {
    Red   = r.Next(50,255);
@@ -70,7 +107,9 @@ Ogre::ColourValue Model::VoxelColour::ToColourValue() const
 
 
 Model::Model()
-{}
+{
+    MyPlayer.InitChargeur();
+}
 Model::~Model()
 {}
 
@@ -82,6 +121,7 @@ Model::~Model()
 void Model::SetObserver(Observer * observer)
 {
    MyObserver = observer;
+   MyObserver->UpdateChargeur(MyPlayer.GetChargeur(), MyPlayer.GetTotalMunitions());
 }
 
 void Model::Tick(float time)
@@ -100,14 +140,21 @@ void Model::Tick(float time)
 
 void Model::Fire(Projectile* p, float time, bool left)
 {
-   Ogre::Vector3 x(1,0,0);
-   if (left) x *= -1;
-   x = MyPlayer.GetOrientation() * x;
-   
-   p->Init(*this, MyPlayer.Position + x, MyPlayer.GetDirection(), time);
-   MyObserver->ProjectileFired(*p);
-   
-   Projectiles.push_back(p);
+   int chargeur = MyPlayer.GetChargeur();
+   if(chargeur > 0) {
+
+       MyPlayer.tirer();
+
+       Ogre::Vector3 x(1,0,0);
+       if (left) x *= -1;
+       x = MyPlayer.GetOrientation() * x;
+
+       p->Init(*this, MyPlayer.Position + x, MyPlayer.GetDirection(), time);
+       MyObserver->ProjectileFired(*p);
+       MyObserver->UpdateChargeur(MyPlayer.GetChargeur(), MyPlayer.GetTotalMunitions());
+
+       Projectiles.push_back(p);
+   }
 }
 
 void Model::SetPlayerPosition(const Ogre::Vector3 & pos)
@@ -531,3 +578,7 @@ long Model::GetWidth()    { return Width;    }
 long Model::GetHeight()   { return Height;   }
 long Model::GetDepth()    { return Depth;    }
 long Model::GetMeshSize() { return MeshSize; }
+
+
+
+

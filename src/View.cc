@@ -56,6 +56,11 @@ void View::OnFrame(float time)
    NbFrame++;
 }
 
+void View::UpdateChargeur(int chargeur, int total)
+{
+  MyCeguiView->SetStockMunitions(chargeur, total);
+}
+
 void View::ProjectileFired(Projectile & p)
 {
    p.InitView(*SceneManager);

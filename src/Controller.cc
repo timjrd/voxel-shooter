@@ -61,6 +61,9 @@ bool Controller::frameRenderingQueued(const Ogre::FrameEvent& evt)
    else if (Keyboard->isKeyDown(OIS::KC_LSHIFT) and not Keyboard->isKeyDown(OIS::KC_SPACE))
       translate.y = -1;
 
+   if(Keyboard->isKeyDown(OIS::KC_R))
+       MyModel->RechargeArmePlayer();
+
    translate.normalise();
    MyModel->TranslatePlayer(translate * evt.timeSinceLastFrame * 40);
 

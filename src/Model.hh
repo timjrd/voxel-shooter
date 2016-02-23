@@ -31,10 +31,11 @@ public:
    class Observer
    {
    public:
+      virtual void UpdateChargeur(int chargeur, int total) = 0;
       virtual void ProjectileFired(Projectile &) = 0;
       virtual void UpdatePlayer(const Ogre::Vector3 & pos, const Ogre::Quaternion & orientation) = 0;
       virtual void UpdateSize(long meshSize, long width, long height, long depth) = 0;
-      virtual void UpdateMesh(long x, long y, long z, const std::vector<Model::Quad> &) = 0;   
+      virtual void UpdateMesh(long x, long y, long z, const std::vector<Model::Quad> &) = 0;
    };
 
 
@@ -44,6 +45,11 @@ public:
       float YawValue   = 0;
       float PitchValue = 0;
 
+      float Vie = 100;
+      int NbMunitions = 100;
+      int QuantiteChargeur = 20;
+      int ChargeurEnCours = 0;
+
    public:
       Ogre::Vector3 Position;
 
@@ -51,6 +57,16 @@ public:
       void Pitch(float pitch);
       Ogre::Vector3    GetDirection()   const;
       Ogre::Quaternion GetOrientation() const;
+
+      float GetVie()          { return Vie;             }
+      int GetChargeur()       { return ChargeurEnCours; }
+      int GetTotalMunitions() { return NbMunitions;     }
+
+      void  Decremente(float degats);
+
+      void tirer()            { ChargeurEnCours--; }
+      void Recharger(Model::Observer *);
+      void InitChargeur();
    };
 
 private:
@@ -132,4 +148,6 @@ public:
    long GetHeight();
    long GetDepth();
    long GetMeshSize();
+
+   void RechargeArmePlayer();
 };
