@@ -113,11 +113,13 @@ set(HDRS
   ./src/Controller.hh
   ./src/Projectile.hh
   ./src/utils.hh
+  ./src/CeguiView.hh
 )
  
 set(SRCS
   ./src/main.cc
   
+  ./src/CeguiView.cc
   ./src/App.cc
   ./src/Model.cc
   ./src/View.cc

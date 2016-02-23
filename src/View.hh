@@ -2,13 +2,12 @@
 
 #include "Model.hh"
 #include "Projectile.hh"
+#include "CeguiView.hh"
 
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
 #include <OgreCamera.h>
 #include <OgreRenderWindow.h>
-
-#include <CEGUI/CEGUI.h>
 
 #include <vector>
 #include <tuple>
@@ -27,12 +26,13 @@ private:
    Ogre::SceneManager * SceneManager;
    Ogre::Camera       * Camera;
 
-   CEGUI::Window      * FpsViewer;
    float TimeAtFirstFrame = 0;
    int   NbFrame          = 0;
 
    Ogre::SceneNode * PlayerNode;
    
+   CeguiView * MyCeguiView;
+
 public:
    View();
    void Init(Ogre::Root &, Ogre::RenderWindow &);

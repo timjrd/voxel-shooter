@@ -1,9 +1,6 @@
 #include "View.hh"
 
 #include <OgreManualObject.h>
-
-#include <CEGUI/RendererModules/Ogre/Renderer.h>
-
 #include <string>
 
 using namespace std;
@@ -36,33 +33,7 @@ void View::Init(Ogre::Root & root, Ogre::RenderWindow & window)
 
    SceneManager->setAmbientLight(Ogre::ColourValue(0, 0, 0));
 
-
-   // CEGUI FpsViewer
-   
-   CEGUI::OgreRenderer& myRenderer = CEGUI::OgreRenderer::bootstrapSystem(); 
-
-   CEGUI::SchemeManager::getSingleton().createFromFile( "TaharezLook.scheme" );
-   CEGUI::FontManager::getSingleton().createFromFile( "DejaVuSans-10.font" );
-
-   CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultFont( "DejaVuSans-10" );
-   CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage( "TaharezLook/MouseArrow" );
-   CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultTooltipType( "TaharezLook/Tooltip" );
-
-   CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
-   CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
-
-   //CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
-   //quit->setText("MyButton Quit");
-   //quit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
-
-   FpsViewer = wmgr.createWindow("TaharezLook/Label", "CEGUIDemo/FpsLabel");
-   FpsViewer->setText("FPS");
-   FpsViewer->setSize(CEGUI::USize(CEGUI::UDim(0.10,0), CEGUI::UDim(0.05, 0)));
-   FpsViewer->setPosition(CEGUI::UVector2(CEGUI::UDim(0.90,0), CEGUI::UDim(0,5)));
-
-   sheet->addChild(FpsViewer);
-   //sheet->addChild(quit);
-   CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+   MyCeguiView = new CeguiView();
 }
 
 void View::SetModel(Model & model)
@@ -76,7 +47,7 @@ void View::OnFrame(float time)
    {
       const float elapsed = time - TimeAtFirstFrame;
       const int   fps     = NbFrame / elapsed;
-      FpsViewer->setText(to_string(fps) + " FPS");
+      MyCeguiView->SetFpsText(to_string(fps) + " FPS");
 
       NbFrame = 0;
       TimeAtFirstFrame = time;
