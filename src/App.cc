@@ -85,7 +85,7 @@ bool App::Init(const string & pluginsFile, const string & resourcesFile)
    //Keyboard->setEventCallback(&MyController);
 
    //MyModel.GenerateCave(30, 300, 300, 300, time(NULL));
-   MyModel.GenerateMengerSponge(30, 100, 1);
+   MyModel.GenerateMengerSponge(30, 300, 4);
 
    return true;
 }

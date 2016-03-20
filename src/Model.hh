@@ -109,7 +109,7 @@ private:
    long MeshSize = 0;
 
 
-   void MengerSponge(int x, int y, int z, int size);
+   void MengerSponge(int x, int y, int z, int size, int it, int iterations);
    void BrushEllipsoid(int cx, int cy, int cz, int a, int b, int c);
    void ExtractMesh(long x, long y, long z, std::vector<Quad> & res);
    void UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int toY, int toZ);

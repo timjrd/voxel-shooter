@@ -28,9 +28,9 @@ void View::Init(Ogre::Root & root, Ogre::RenderWindow & window)
 
    Ogre::Light* light = SceneManager->createLight();
    light->setDiffuseColour(1, 1, 1);
-   setLightAttenuation(*light, 270);
+   setLightAttenuation(*light, 900); // !!
    PlayerNode->attachObject(light);
-
+   
    SceneManager->setAmbientLight(Ogre::ColourValue(0, 0, 0));
 
    MyCeguiView = new CeguiView();

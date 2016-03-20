@@ -330,7 +330,11 @@ void Model::GenerateCave(size_t meshSize, size_t width, size_t height, size_t de
 void Model::GenerateMengerSponge(int meshSize, int size, int iterations)
 {
    const int spongeSize = pow(3,iterations);
-   const int scaledSize = spongeSize * (size/spongeSize);
+   int scaledSize;
+   if (size > spongeSize)
+      scaledSize = spongeSize * (size/spongeSize);
+   else
+      scaledSize = spongeSize;
    
    Width = Height = Depth = scaledSize;
    MeshSize = meshSize;
@@ -340,7 +344,7 @@ void Model::GenerateMengerSponge(int meshSize, int size, int iterations)
    // --
    
    FillRainbow();
-   MengerSponge(0,0,0, scaledSize);
+   MengerSponge(0,0,0, scaledSize, 1, iterations);
    
    // --
    
@@ -350,8 +354,11 @@ void Model::GenerateMengerSponge(int meshSize, int size, int iterations)
    UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1);
 }
 
-void Model::MengerSponge(int x, int y, int z, int size)
+void Model::MengerSponge(int x, int y, int z, int size, int it, int iterations)
 {
+   if (it > iterations)
+      return;
+   
    const int h = size/3;
 
    SetCube(x+h, y+h, z    , h, false); // arrière 
@@ -363,6 +370,38 @@ void Model::MengerSponge(int x, int y, int z, int size)
 
    SetCube(x+h, y+h+h, z+h, h, false); // haut
    SetCube(x+h, y    , z+h, h, false); // bas
+
+   // ligne arrière bas
+   MengerSponge(x    , y, z, h, it+1, iterations);
+   MengerSponge(x+h  , y, z, h, it+1, iterations);
+   MengerSponge(x+h+h, y, z, h, it+1, iterations);
+
+   // ligne avant bas
+   MengerSponge(x    , y, z+h+h, h, it+1, iterations);
+   MengerSponge(x+h  , y, z+h+h, h, it+1, iterations);
+   MengerSponge(x+h+h, y, z+h+h, h, it+1, iterations);
+
+   // ligne arrière haut
+   MengerSponge(x    , y+h+h, z, h, it+1, iterations);
+   MengerSponge(x+h  , y+h+h, z, h, it+1, iterations);
+   MengerSponge(x+h+h, y+h+h, z, h, it+1, iterations);
+
+   // ligne avant haut
+   MengerSponge(x    , y+h+h, z+h+h, h, it+1, iterations);
+   MengerSponge(x+h  , y+h+h, z+h+h, h, it+1, iterations);
+   MengerSponge(x+h+h, y+h+h, z+h+h, h, it+1, iterations);
+
+   // croix gauche
+   MengerSponge(x, y+h  , z    , h, it+1, iterations);
+   MengerSponge(x, y+h+h, z+h  , h, it+1, iterations);
+   MengerSponge(x, y+h  , z+h+h, h, it+1, iterations);
+   MengerSponge(x, y    , z+h  , h, it+1, iterations);
+
+   // croix droite
+   MengerSponge(x+h+h, y+h  , z    , h, it+1, iterations);
+   MengerSponge(x+h+h, y+h+h, z+h  , h, it+1, iterations);
+   MengerSponge(x+h+h, y+h  , z+h+h, h, it+1, iterations);
+   MengerSponge(x+h+h, y    , z+h  , h, it+1, iterations);
 }
 
 
@@ -454,13 +493,13 @@ void Model::SetCube(int x, int y, int z, int size, bool set)
 }
 void Model::SetBox(int fromX, int fromY, int fromZ, int toX, int toY, int toZ, bool set)
 {
-   fromX = between(0, fromX, (int)Width-1);
-   fromY = between(0, fromY, (int)Height-1);
-   fromZ = between(0, fromZ, (int)Depth-1);
+   fromX = between(0, fromX, (int)Width);
+   fromY = between(0, fromY, (int)Height);
+   fromZ = between(0, fromZ, (int)Depth);
 
-   toX = between(0, toX, (int)Width-1);
-   toY = between(0, toY, (int)Height-1);
-   toZ = between(0, toZ, (int)Depth-1);
+   toX = between(0, toX, (int)Width);
+   toY = between(0, toY, (int)Height);
+   toZ = between(0, toZ, (int)Depth);
 
    for (int x = fromX; x < toX; x++)
       for (int y = fromY; y < toY; y++)
@@ -548,7 +587,7 @@ void Model::ExtractMesh(long mx, long my, long mz, std::vector<Quad> & res)
 
                Ogre::ColourValue colour = v.Colour.ToColourValue();
                
-               if (x>0 and not FilledAt(x-1,y,z)) {
+               if (x==0 or not FilledAt(x-1,y,z)) {
                   res.emplace_back();
                   res.back().A = {fx, fy  , fz  };
                   res.back().B = {fx, fy  , fz+1};
@@ -558,7 +597,7 @@ void Model::ExtractMesh(long mx, long my, long mz, std::vector<Quad> & res)
                   res.back().Colour = colour;
                }
 
-               if (x<Width-1 and not FilledAt(x+1,y,z)) {
+               if (x==Width-1 or not FilledAt(x+1,y,z)) {
                   res.emplace_back();
                   res.back().A = {fx+1, fy  , fz  };
                   res.back().B = {fx+1, fy+1, fz  };
@@ -568,7 +607,7 @@ void Model::ExtractMesh(long mx, long my, long mz, std::vector<Quad> & res)
                   res.back().Colour = colour;
                }
 
-               if (y>0 and not FilledAt(x,y-1,z)) {
+               if (y==0 or not FilledAt(x,y-1,z)) {
                   res.emplace_back();
                   res.back().A = {fx  , fy, fz  };
                   res.back().B = {fx+1, fy, fz  };
@@ -578,7 +617,7 @@ void Model::ExtractMesh(long mx, long my, long mz, std::vector<Quad> & res)
                   res.back().Colour = colour;
                }
 
-               if (y<Height-1 and not FilledAt(x,y+1,z)) {
+               if (y==Height-1 or not FilledAt(x,y+1,z)) {
                   res.emplace_back();
                   res.back().A = {fx  , fy+1, fz};
                   res.back().B = {fx  , fy+1, fz+1};
@@ -588,7 +627,7 @@ void Model::ExtractMesh(long mx, long my, long mz, std::vector<Quad> & res)
                   res.back().Colour = colour;
                }
                
-               if (z>0 and not FilledAt(x,y,z-1)) {
+               if (z==0 or not FilledAt(x,y,z-1)) {
                   res.emplace_back();
                   res.back().A = {fx  , fy  , fz};
                   res.back().B = {fx  , fy+1, fz};
@@ -598,7 +637,7 @@ void Model::ExtractMesh(long mx, long my, long mz, std::vector<Quad> & res)
                   res.back().Colour = colour;
                }
 
-               if (z<Depth-1 and not FilledAt(x,y,z+1)) {
+               if (z==Depth-1 or not FilledAt(x,y,z+1)) {
                   res.emplace_back();
                   res.back().A = {fx  , fy  , fz+1};
                   res.back().B = {fx+1, fy  , fz+1};
