@@ -207,24 +207,10 @@ bool Model::FilledAt(size_t x, size_t y, size_t z)
 }
 
 
-struct Cave {
-   int x, y, z, a, b, c;
-   int vx, vy, vz, va, vb, vc;
-   int nx, ny, nz, na, nb, nc;
-};
-void Model::Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed)
+void Model::FillRainbow()
 {
-   MeshSize = meshSize;
-   Width    = MeshSize * (width/MeshSize);
-   Height   = MeshSize * (height/MeshSize);
-   Depth    = MeshSize * (depth/MeshSize);
-
-   Voxels.resize(Width*Height*Depth);
-
-   // --
+   Random random(424242424242);
    
-   Random random(seed);
-
    for (int x=0; x < Width; x++)
       for (int y=0; y < Height; y++)
          for (int z=0; z < Depth; z++)
@@ -240,6 +226,27 @@ void Model::Generate(size_t meshSize, size_t width, size_t height, size_t depth,
             
             v.Colour = colour;
          }
+}
+
+struct Cave {
+   int x, y, z, a, b, c;
+   int vx, vy, vz, va, vb, vc;
+   int nx, ny, nz, na, nb, nc;
+};
+void Model::GenerateCave(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed)
+{
+   MeshSize = meshSize;
+   Width    = MeshSize * (width/MeshSize);
+   Height   = MeshSize * (height/MeshSize);
+   Depth    = MeshSize * (depth/MeshSize);
+
+   Voxels.resize(Width*Height*Depth);
+
+   // --
+   
+   Random random(seed);
+
+   FillRainbow();
    
    const int iterations = max(Width, max(Height, Depth)) * 4;
    const int period = 5 + iterations/80;
@@ -319,6 +326,45 @@ void Model::Generate(size_t meshSize, size_t width, size_t height, size_t depth,
    UpdateSize();
    UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1);
 }
+
+void Model::GenerateMengerSponge(int meshSize, int size, int iterations)
+{
+   const int spongeSize = pow(3,iterations);
+   const int scaledSize = spongeSize * (size/spongeSize);
+   
+   Width = Height = Depth = scaledSize;
+   MeshSize = meshSize;
+   
+   Voxels.resize(Width*Height*Depth);
+
+   // --
+   
+   FillRainbow();
+   MengerSponge(0,0,0, scaledSize);
+   
+   // --
+   
+   SetPlayerPosition(Ogre::Vector3(Width/2, Height/2, Depth/2));
+
+   UpdateSize();
+   UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1);
+}
+
+void Model::MengerSponge(int x, int y, int z, int size)
+{
+   const int h = size/3;
+
+   SetCube(x+h, y+h, z    , h, false); // arrière 
+   SetCube(x+h, y+h, z+h  , h, false); // centre
+   SetCube(x+h, y+h, z+h+h, h, false); // avant
+
+   SetCube(x+h+h, y+h, z+h, h, false); // droite
+   SetCube(x    , y+h, z+h, h, false); // gauche
+
+   SetCube(x+h, y+h+h, z+h, h, false); // haut
+   SetCube(x+h, y    , z+h, h, false); // bas
+}
+
 
 /*
 void Model::BlurThreshold()
@@ -402,6 +448,26 @@ void Model::SetEllipsoid(float cx, float cy, float cz, float a, float b, float c
    UpdateMeshes(fromX,fromY,fromZ,toX,toY,toZ);
 }
 
+void Model::SetCube(int x, int y, int z, int size, bool set)
+{
+   SetBox(x,y,z, x+size, y+size, z+size, set);
+}
+void Model::SetBox(int fromX, int fromY, int fromZ, int toX, int toY, int toZ, bool set)
+{
+   fromX = between(0, fromX, (int)Width-1);
+   fromY = between(0, fromY, (int)Height-1);
+   fromZ = between(0, fromZ, (int)Depth-1);
+
+   toX = between(0, toX, (int)Width-1);
+   toY = between(0, toY, (int)Height-1);
+   toZ = between(0, toZ, (int)Depth-1);
+
+   for (int x = fromX; x < toX; x++)
+      for (int y = fromY; y < toY; y++)
+         for (int z = fromZ; z < toZ; z++)
+            At(x,y,z).Value = set;
+}
+
 
 void Model::BrushEllipsoid(int cx, int cy, int cz, int a, int b, int c)
 {
@@ -458,11 +524,20 @@ void Model::UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int toY, int 
 }
 
 
-void Model::ExtractMesh(size_t mx, size_t my, size_t mz, std::vector<Quad> & res)
+void Model::ExtractMesh(long mx, long my, long mz, std::vector<Quad> & res)
 {
-   for(size_t x=mx*MeshSize; x < mx*MeshSize+MeshSize; x++)
-      for(size_t y=my*MeshSize; y < my*MeshSize+MeshSize; y++)
-         for(size_t z=mz*MeshSize; z < mz*MeshSize+MeshSize; z++)
+   const size_t fromX = mx*MeshSize;
+   const size_t fromY = my*MeshSize;
+   const size_t fromZ = mz*MeshSize;
+
+   const size_t toX = min(Width , mx*MeshSize+MeshSize);
+   const size_t toY = min(Height, my*MeshSize+MeshSize);
+   const size_t toZ = min(Depth , mz*MeshSize+MeshSize);
+
+   
+   for(size_t x=fromX; x < toX; x++)
+      for(size_t y=fromY; y < toY; y++)
+         for(size_t z=fromZ; z < toZ; z++)
          {
             const Voxel & v = At(x,y,z);
             if (v.Value)

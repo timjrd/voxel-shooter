@@ -74,9 +74,9 @@ void View::UpdatePlayer(const Ogre::Vector3 & pos, const Ogre::Quaternion & orie
 
 void View::UpdateSize(long meshSize, long width, long height, long depth)
 {
-   MeshesWidth   = width  / meshSize;
-   MeshesHeight  = height / meshSize;
-   MeshesDepth   = depth  / meshSize;
+   MeshesWidth   = width  / meshSize + 1;
+   MeshesHeight  = height / meshSize + 1;
+   MeshesDepth   = depth  / meshSize + 1;
 
    Meshes.resize(MeshesWidth*MeshesHeight*MeshesDepth, {nullptr, nullptr});
 }

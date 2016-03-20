@@ -84,8 +84,9 @@ bool App::Init(const string & pluginsFile, const string & resourcesFile)
    Mouse->setEventCallback(&MyController);
    //Keyboard->setEventCallback(&MyController);
 
-   MyModel.Generate(30, 300, 300, 300, time(NULL));
-   
+   //MyModel.GenerateCave(30, 300, 300, 300, time(NULL));
+   MyModel.GenerateMengerSponge(30, 100, 1);
+
    return true;
 }
 

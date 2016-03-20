@@ -62,7 +62,7 @@ public:
       int GetChargeur()       { return ChargeurEnCours; }
       int GetTotalMunitions() { return NbMunitions;     }
 
-      void  Decremente(float degats);
+      void Decremente(float degats);
 
       void tirer()            { ChargeurEnCours--; }
       void Recharger(Model::Observer *);
@@ -109,8 +109,9 @@ private:
    long MeshSize = 0;
 
 
+   void MengerSponge(int x, int y, int z, int size);
    void BrushEllipsoid(int cx, int cy, int cz, int a, int b, int c);
-   void ExtractMesh(size_t x, size_t y, size_t z, std::vector<Quad> & res);
+   void ExtractMesh(long x, long y, long z, std::vector<Quad> & res);
    void UpdateMeshes(int fromX, int fromY, int fromZ, int toX, int toY, int toZ);
    void UpdatePlayer();
    void UpdateSize();
@@ -130,7 +131,9 @@ public:
    void YawPlayer(float);
    void PitchPlayer(float);
 
-   void Generate(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed);
+   void FillRainbow();
+   void GenerateCave(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed);
+   void GenerateMengerSponge(int meshSize, int size, int iterations);
 
    //static uint8_t & at(size_t x, size_t y, size_t z, std::vector<uint8_t> & voxels, size_t width, size_t height, size_t depth);
    Voxel & At(size_t x, size_t y, size_t z);
@@ -140,6 +143,8 @@ public:
    void SetSphere(float cx, float cy, float cz, float r, bool set);
    void SetSphere(Ogre::Vector3 pos, float r, bool set);
    void SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set);
+   void SetCube(int x, int y, int z, int size, bool set);
+   void SetBox(int fromX, int fromY, int fromZ, int toX, int toY, int toZ, bool set);
 
    bool BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max);
    bool PointIntersects(Ogre::Vector3 pos);
