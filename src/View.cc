@@ -28,7 +28,7 @@ void View::Init(Ogre::Root & root, Ogre::RenderWindow & window)
 
    Ogre::Light* light = SceneManager->createLight();
    light->setDiffuseColour(1, 1, 1);
-   setLightAttenuation(*light, 900); // !!
+   setLightAttenuation(*light, 300); // !!
    PlayerNode->attachObject(light);
    
    SceneManager->setAmbientLight(Ogre::ColourValue(0, 0, 0));
@@ -68,6 +68,8 @@ void View::ProjectileFired(Projectile & p)
 
 void View::UpdatePlayer(const Ogre::Vector3 & pos, const Ogre::Quaternion & orientation)
 {
+   //std::cout << "UpdatePlayer: " << pos << " " << orientation << std::endl;
+   
    PlayerNode->setPosition(pos);
    PlayerNode->setOrientation(orientation);
 }

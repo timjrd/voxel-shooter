@@ -36,7 +36,13 @@ void Controller::windowResized(Ogre::RenderWindow* rw)
 
 bool Controller::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
-   Time = Timer.getMilliseconds() /(float) 1000;
+   // on décompose pour pas overflow
+   unsigned long t = Timer.getMilliseconds();
+   int s  = t / 1000;
+   int ms = t % 1000;
+   Time = Fix16(s) + Fix16::div(ms,1000);
+
+   Fix16 timeSinceLastFrame = Time - LastFrameAt;
    
    Keyboard->capture();
    Mouse->capture();
@@ -44,7 +50,7 @@ bool Controller::frameRenderingQueued(const Ogre::FrameEvent& evt)
    if(Keyboard->isKeyDown(OIS::KC_ESCAPE))
       return false;
 
-   Ogre::Vector3 translate(0,0,0);
+   FixVector3 translate(0,0,0);
     
    if (Keyboard->isKeyDown(OIS::KC_Z) and not Keyboard->isKeyDown(OIS::KC_S))
       translate.z = -1;
@@ -65,19 +71,20 @@ bool Controller::frameRenderingQueued(const Ogre::FrameEvent& evt)
        MyModel->RechargeArmePlayer();
 
    translate.normalise();
-   MyModel->TranslatePlayer(translate * evt.timeSinceLastFrame * 40);
+   MyModel->TranslatePlayer(translate * timeSinceLastFrame * 50);
 
     
    MyModel->Tick(Time);
-   MyView->OnFrame(Time);
-    
+   MyView->OnFrame(Time.toFloat());
+
+   LastFrameAt = Time;
    return true;
 }
 
 bool Controller::mouseMoved(const OIS::MouseEvent& me)
 {
-   MyModel->YawPlayer(-me.state.X.rel*0.0015);
-   MyModel->PitchPlayer(-me.state.Y.rel*0.0015);
+   MyModel->YawPlayer(Fix16::div(15,10000) * -me.state.X.rel);
+   MyModel->PitchPlayer(Fix16::div(15,10000) * -me.state.Y.rel);
 
    return true;
 }

@@ -62,6 +62,10 @@ bool App::Init(const string & pluginsFile, const string & resourcesFile)
    size_t windowHnd = 0;
    Window->getCustomAttribute("WINDOW", &windowHnd);
    pl.insert(std::make_pair(std::string("WINDOW"), std::to_string(windowHnd)));
+
+   // désactiver la capture (grab) sous X11
+   //pl.insert(std::make_pair(std::string("x11_mouse_grab"), std::string("false")));
+   pl.insert(std::make_pair(std::string("x11_keyboard_grab"), std::string("false")));
  
    InputManager = OIS::InputManager::createInputSystem( pl );
    Keyboard = static_cast<OIS::Keyboard*>(InputManager->createInputObject( OIS::OISKeyboard, false ));
@@ -84,8 +88,8 @@ bool App::Init(const string & pluginsFile, const string & resourcesFile)
    Mouse->setEventCallback(&MyController);
    //Keyboard->setEventCallback(&MyController);
 
-   //MyModel.GenerateCave(30, 300, 300, 300, time(NULL));
-   MyModel.GenerateMengerSponge(30, 300, 4);
+   MyModel.GenerateCave(30, 300, 300, 300, time(NULL));
+   //MyModel.GenerateMengerSponge(30, 1, 4);
 
    return true;
 }

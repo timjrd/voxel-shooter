@@ -2,6 +2,9 @@
 
 //#include "View.hh"
 //#include "App.hh"
+#include "fix16.hpp"
+#include "FixVector3.hh"
+#include "FixQuaternion.hh"
 #include "utils.hh"
 
 #include <OgreVector3.h>
@@ -42,27 +45,27 @@ public:
    class Player
    {
    private:
-      float YawValue   = 0;
-      float PitchValue = 0;
+      Fix16 YawValue   = 0;
+      Fix16 PitchValue = 0;
 
-      float Vie = 100;
+      Fix16 Vie = 100;
       int NbMunitions = 100;
       int QuantiteChargeur = 20;
       int ChargeurEnCours = 0;
 
    public:
-      Ogre::Vector3 Position;
+      FixVector3 Position;
 
-      void Yaw(float yaw);
-      void Pitch(float pitch);
-      Ogre::Vector3    GetDirection()   const;
-      Ogre::Quaternion GetOrientation() const;
+      void Yaw(Fix16 yaw);
+      void Pitch(Fix16 pitch);
+      FixVector3    GetDirection()   const;
+      FixQuaternion GetOrientation() const;
 
-      float GetVie()          { return Vie;             }
+      Fix16 GetVie()          { return Vie;             }
       int GetChargeur()       { return ChargeurEnCours; }
       int GetTotalMunitions() { return NbMunitions;     }
 
-      void Decremente(float degats);
+      void Decremente(Fix16 degats);
 
       void tirer()            { ChargeurEnCours--; }
       void Recharger(Model::Observer *);
@@ -97,7 +100,7 @@ private:
    Observer * MyObserver = nullptr;
 
    Player MyPlayer;
-   float  PlayerSize = 3;
+   Fix16  PlayerSize = 3;
 
    std::list<Projectile*> Projectiles;
    
@@ -122,14 +125,14 @@ public:
 
    void SetObserver(Observer *);
 
-   void Tick(float time);
+   void Tick(Fix16 time);
 
-   void Fire(Projectile*, float time, bool left);
+   void Fire(Projectile*, Fix16 time, bool left);
    
-   void TranslatePlayer(const Ogre::Vector3 &);
-   void SetPlayerPosition(const Ogre::Vector3 &);
-   void YawPlayer(float);
-   void PitchPlayer(float);
+   void TranslatePlayer(const FixVector3 &);
+   void SetPlayerPosition(const FixVector3 &);
+   void YawPlayer(Fix16);
+   void PitchPlayer(Fix16);
 
    void FillRainbow();
    void GenerateCave(size_t meshSize, size_t width, size_t height, size_t depth, unsigned long long seed);
@@ -140,14 +143,13 @@ public:
    bool FilledAt(size_t x, size_t y, size_t z);
 
    void SetVoxel(int x, int y, int z, bool set);
-   void SetSphere(float cx, float cy, float cz, float r, bool set);
-   void SetSphere(Ogre::Vector3 pos, float r, bool set);
-   void SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set);
+   void SetSphere(int cx, int cy, int cz, int r, bool set);
+   void SetEllipsoid(int cx, int cy, int cz, int a, int b, int c, bool set);
    void SetCube(int x, int y, int z, int size, bool set);
    void SetBox(int fromX, int fromY, int fromZ, int toX, int toY, int toZ, bool set);
 
-   bool BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max);
-   bool PointIntersects(Ogre::Vector3 pos);
+   bool BoxIntersects(FixVector3 min, FixVector3 max);
+   bool PointIntersects(FixVector3 pos);
 
    long GetWidth();
    long GetHeight();

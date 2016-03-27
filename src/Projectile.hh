@@ -14,9 +14,9 @@ class Projectile
 public:
    virtual ~Projectile() {};
    
-   virtual void Init(Model &, const Ogre::Vector3 & pos, const Ogre::Vector3 & dir, float time) = 0;
+   virtual void Init(Model &, const FixVector3 & pos, const FixVector3 & dir, Fix16 time) = 0;
    virtual void InitView(Ogre::SceneManager &) = 0;
-   virtual bool Update(float time) = 0;
+   virtual bool Update(Fix16 time) = 0;
 };
 
 // Base projectile class
@@ -32,10 +32,10 @@ protected:
 
    //Ogre::BillboardSet *projectileBbs;
 
-   float FiredAt;
+   Fix16 FiredAt;
 
-   Ogre::Vector3 FiredFrom;
-   Ogre::Vector3 FiredTo;
+   FixVector3 FiredFrom;
+   FixVector3 FiredTo;
 
    Model * MyModel;
 
@@ -43,7 +43,7 @@ public:
    LaserProjectile(const Ogre::ColourValue &);
    ~LaserProjectile() override;
 
-   void Init(Model &, const Ogre::Vector3 & pos, const Ogre::Vector3 & dir, float time) override;
+   void Init(Model &, const FixVector3 & pos, const FixVector3 & dir, Fix16 time) override;
    void InitView(Ogre::SceneManager &) override;
 };
 
@@ -52,7 +52,7 @@ class FastProjectile : public LaserProjectile
 {
 public:
    FastProjectile();
-   bool Update(float time) override;
+   bool Update(Fix16 time) override;
 };
  
 

@@ -1,41 +1,44 @@
 #include "Model.hh"
 #include "Projectile.hh"
 #include "utils.hh"
+#include "fix16.hpp"
 
 #include <OgreMath.h>
 
 #include <cmath>
 #include <algorithm>
 
+#include <iostream> // DEBUG
+
 using namespace std;
 
-void Model::Player::Yaw(float yaw) {
-   YawValue = fmod(YawValue + yaw, 2*PI);
+void Model::Player::Yaw(Fix16 yaw) {
+   YawValue = (YawValue + yaw).mod(Fix16(2)*FIX_PI);
 }
 
-void Model::Player::Pitch(float pitch) {
-   PitchValue = between(-PI/2, PitchValue + pitch, PI/2);
+void Model::Player::Pitch(Fix16 pitch) {
+   PitchValue = between(-FIX_PI/Fix16(2), PitchValue + pitch, FIX_PI/Fix16(2));
 }
 
-Ogre::Vector3    Model::Player::GetDirection() const
+FixVector3    Model::Player::GetDirection() const
 {
-   return GetOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z;
+   return GetOrientation() * FixVector3::NEGATIVE_UNIT_Z;
 }
 
-Ogre::Quaternion Model::Player::GetOrientation() const
+FixQuaternion Model::Player::GetOrientation() const
 {
-   const Ogre::Quaternion yaw  (Ogre::Radian(YawValue)  , Ogre::Vector3(0,1,0));
-   const Ogre::Quaternion pitch(Ogre::Radian(PitchValue), Ogre::Vector3(1,0,0));
+   const FixQuaternion yaw  (YawValue  , FixVector3(0,1,0));
+   const FixQuaternion pitch(PitchValue, FixVector3(1,0,0));
 
    return yaw * pitch;
 }
 
 
-void Model::Player::Decremente(float degats)
+void Model::Player::Decremente(Fix16 degats)
 {
     Vie -= degats;
-    if(GetVie() < 0)
-        Vie = 0;
+    if(GetVie() < Fix16(0))
+       Vie = Fix16(0);
 }
 
 void Model::Player::Recharger(Model::Observer *ob)
@@ -102,7 +105,7 @@ void Model::VoxelColour::operator+=(int d)
 }
 Ogre::ColourValue Model::VoxelColour::ToColourValue() const
 {
-   return Ogre::ColourValue(Red/(float)255, Green/(float)255, Blue/(float)255);
+   return Ogre::ColourValue(Red/255.0, Green/255.0, Blue/255.0);
 }
 
 
@@ -124,7 +127,7 @@ void Model::SetObserver(Observer * observer)
    MyObserver->UpdateChargeur(MyPlayer.GetChargeur(), MyPlayer.GetTotalMunitions());
 }
 
-void Model::Tick(float time)
+void Model::Tick(Fix16 time)
 {
    for(auto i = Projectiles.begin(); i != Projectiles.end();)
    {
@@ -138,15 +141,15 @@ void Model::Tick(float time)
    }
 }
 
-void Model::Fire(Projectile* p, float time, bool left)
+void Model::Fire(Projectile* p, Fix16 time, bool left)
 {
    int chargeur = MyPlayer.GetChargeur();
    if(chargeur > 0) {
 
        MyPlayer.tirer();
 
-       Ogre::Vector3 x(1,0,0);
-       if (left) x *= -1;
+       FixVector3 x(1,0,0);
+       if (left) x *= -Fix16(1);
        x = MyPlayer.GetOrientation() * x;
 
        p->Init(*this, MyPlayer.Position + x, MyPlayer.GetDirection(), time);
@@ -157,23 +160,23 @@ void Model::Fire(Projectile* p, float time, bool left)
    }
 }
 
-void Model::SetPlayerPosition(const Ogre::Vector3 & pos)
+void Model::SetPlayerPosition(const FixVector3 & pos)
 {
    MyPlayer.Position = pos;
    UpdatePlayer();
 }
 
-void Model::TranslatePlayer(const Ogre::Vector3 & dir)
+void Model::TranslatePlayer(const FixVector3 & dir)
 {
-   const Ogre::Vector3 d(PlayerSize, PlayerSize, PlayerSize);
+   const FixVector3 d(PlayerSize, PlayerSize, PlayerSize);
 
-   const Ogre::Vector3 t = MyPlayer.GetOrientation() * dir;
+   const FixVector3 t = MyPlayer.GetOrientation() * dir;
 
-   Ogre::Vector3 & pos = MyPlayer.Position;
+   FixVector3 & pos = MyPlayer.Position;
 
-   const Ogre::Vector3 x(t.x,0,0);
-   const Ogre::Vector3 y(0,t.y,0);
-   const Ogre::Vector3 z(0,0,t.z);
+   const FixVector3 x(t.x,0,0);
+   const FixVector3 y(0,t.y,0);
+   const FixVector3 z(0,0,t.z);
 
    if (not BoxIntersects(pos+z - d, pos+z + d))
       pos += z;
@@ -187,11 +190,11 @@ void Model::TranslatePlayer(const Ogre::Vector3 & dir)
    UpdatePlayer();
 }
 
-void Model::YawPlayer(float x) {
+void Model::YawPlayer(Fix16 x) {
    MyPlayer.Yaw(x);
    UpdatePlayer();
 }
-void Model::PitchPlayer(float x) {
+void Model::PitchPlayer(Fix16 x) {
    MyPlayer.Pitch(x);
    UpdatePlayer();
 }
@@ -252,7 +255,7 @@ void Model::GenerateCave(size_t meshSize, size_t width, size_t height, size_t de
    const int period = 5 + iterations/80;
    
    const int maxRadius = min(Width, min(Height, Depth)) / 7;
-   const int minRadius = PlayerSize*4;
+   const int minRadius = (PlayerSize*4).toInt();
    const int d = max(1, minRadius/3);
    
    std::vector<Cave> caves(1);
@@ -321,7 +324,7 @@ void Model::GenerateCave(size_t meshSize, size_t width, size_t height, size_t de
    for(Voxel & v : Voxels)
       v.Value = (v.Value > 100);
 
-   SetPlayerPosition(Ogre::Vector3(Width/2, Height/2, Depth/2));
+   SetPlayerPosition(FixVector3((int)Width/2, (int)Height/2, (int)Depth/2));
 
    UpdateSize();
    UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1);
@@ -347,8 +350,8 @@ void Model::GenerateMengerSponge(int meshSize, int size, int iterations)
    MengerSponge(0,0,0, scaledSize, 1, iterations);
    
    // --
-   
-   SetPlayerPosition(Ogre::Vector3(Width/2, Height/2, Depth/2));
+
+   SetPlayerPosition(FixVector3((int)Width/2, (int)Height/2, (int)Depth/2));
 
    UpdateSize();
    UpdateMeshes(0,0,0,Width-1,Height-1,Depth-1);
@@ -448,10 +451,7 @@ void Model::BlurThreshold()
 */
 
 
-void Model::SetSphere(Ogre::Vector3 pos, float r, bool set) {
-   SetSphere(pos.x, pos.y, pos.z, r, set);
-}
-void Model::SetSphere(float cx, float cy, float cz, float r, bool set) {
+void Model::SetSphere(int cx, int cy, int cz, int r, bool set) {
    SetEllipsoid(cx,cy,cz,r,r,r,set);
 }
 
@@ -460,27 +460,27 @@ void Model::SetVoxel(int x, int y, int z, bool set)
    At(x,y,z).Value = set;
    UpdateMeshes(x-1, y-1, z-1, x+1, y+1, z+1);
 }
-void Model::SetEllipsoid(float cx, float cy, float cz, float a, float b, float c, bool set)
+void Model::SetEllipsoid(int cx, int cy, int cz, int a, int b, int c, bool set)
 {
-   const int fromX = between(0, (int) (cx-a), ((int)Width)-1);
-   const int fromY = between(0, (int) (cy-b), ((int)Height)-1);
-   const int fromZ = between(0, (int) (cz-c), ((int)Depth)-1);
+   const int fromX = between(0, cx-a, ((int)Width)-1);
+   const int fromY = between(0, cy-b, ((int)Height)-1);
+   const int fromZ = between(0, cz-c, ((int)Depth)-1);
 
-   const int toX = between(0, (int) (cx+a), ((int)Width)-1);
-   const int toY = between(0, (int) (cy+b), ((int)Height)-1);
-   const int toZ = between(0, (int) (cz+c), ((int)Depth)-1);
+   const int toX = between(0, cx+a, ((int)Width)-1);
+   const int toY = between(0, cy+b, ((int)Height)-1);
+   const int toZ = between(0, cz+c, ((int)Depth)-1);
 
-   //std::cout << "SetEllipsoid: " << fromX << "," << fromY << "," << fromZ << std::endl;
+   //std::cout << "BrushEllipsoid: " << fromX << "," << fromY << "," << fromZ << std::endl;
    
    for (int x=fromX; x<=toX; x++)
       for (int y=fromY; y<=toY; y++)
          for (int z=fromZ; z<=toZ; z++)
          {
-            const float tx = x+0.5 - cx;
-            const float ty = y+0.5 - cy;
-            const float tz = z+0.5 - cz;
+            const long long tx = x - cx;
+            const long long ty = y - cy;
+            const long long tz = z - cz;
 
-            if ( (tx*tx)/(a*a) + (ty*ty)/(b*b) + (tz*tz)/(c*c) <= 1 )
+            if ((tx*tx*1000)/(a*a) + (ty*ty*1000)/(b*b) + (tz*tz*1000)/(c*c) <= 1000)
                At(x,y,z).Value = set;
          }
 
@@ -539,7 +539,7 @@ void Model::BrushEllipsoid(int cx, int cy, int cz, int a, int b, int c)
 void Model::UpdatePlayer()
 {
    if (MyObserver)
-      MyObserver->UpdatePlayer(MyPlayer.Position, MyPlayer.GetOrientation());
+      MyObserver->UpdatePlayer(MyPlayer.Position.toVector3(), MyPlayer.GetOrientation().toQuaternion());
 }
 
 void Model::UpdateSize()
@@ -651,15 +651,15 @@ void Model::ExtractMesh(long mx, long my, long mz, std::vector<Quad> & res)
 }
 
 
-bool Model::BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max)
+bool Model::BoxIntersects(FixVector3 min, FixVector3 max)
 {
-   const int fromX = between(0, (int) min.x, ((int)Width)-1);
-   const int fromY = between(0, (int) min.y, ((int)Height)-1);
-   const int fromZ = between(0, (int) min.z, ((int)Depth)-1);
+   const int fromX = between(0, min.x.toInt(), ((int)Width)-1);
+   const int fromY = between(0, min.y.toInt(), ((int)Height)-1);
+   const int fromZ = between(0, min.z.toInt(), ((int)Depth)-1);
 
-   const int toX = between(0, (int) max.x, ((int)Width)-1);
-   const int toY = between(0, (int) max.y, ((int)Height)-1);
-   const int toZ = between(0, (int) max.z, ((int)Depth)-1);
+   const int toX = between(0, max.x.toInt(), ((int)Width)-1);
+   const int toY = between(0, max.y.toInt(), ((int)Height)-1);
+   const int toZ = between(0, max.z.toInt(), ((int)Depth)-1);
 
    for (int x=fromX; x<=toX; x++)
       for (int y=fromY; y<=toY; y++)
@@ -673,11 +673,11 @@ bool Model::BoxIntersects(Ogre::Vector3 min, Ogre::Vector3 max)
    return false;
 }
 
-bool Model::PointIntersects(Ogre::Vector3 pos)
+bool Model::PointIntersects(FixVector3 pos)
 {
-   const int x = pos.x;
-   const int y = pos.y;
-   const int z = pos.z;
+   const int x = pos.x.toInt();
+   const int y = pos.y.toInt();
+   const int z = pos.z.toInt();
 
    if ( x < 0 or x > Width-1
         or y < 0 or y > Height-1

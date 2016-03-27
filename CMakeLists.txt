@@ -106,6 +106,8 @@ if(NOT CEGUIOGRE_FOUND)
 endif()
 
 
+include_directories(./src/ ./lib/libfixmath)
+
 set(HDRS
   ./src/App.hh
   ./src/Model.hh
@@ -114,6 +116,18 @@ set(HDRS
   ./src/Projectile.hh
   ./src/utils.hh
   ./src/CeguiView.hh
+
+  ./src/FixVector3.hh
+  ./src/FixQuaternion.hh
+
+  # libfixmath
+  ./lib/libfixmath/fix16.hpp
+  ./lib/libfixmath/fix16.h
+  ./lib/libfixmath/fix16_trig_sin_lut.h
+  ./lib/libfixmath/fixmath.h
+  ./lib/libfixmath/fract32.h
+  ./lib/libfixmath/int64.h
+  ./lib/libfixmath/uint32.h
 )
  
 set(SRCS
@@ -126,6 +140,18 @@ set(SRCS
   ./src/Controller.cc
   ./src/Projectile.cc
   ./src/utils.cc
+
+  ./src/FixVector3.cc
+  ./src/FixQuaternion.cc
+
+  # libfixmath
+  ./lib/libfixmath/fix16.c
+  ./lib/libfixmath/fix16_sqrt.c
+  ./lib/libfixmath/fix16_trig.c
+  ./lib/libfixmath/fix16_exp.c
+  ./lib/libfixmath/fix16_str.c
+  ./lib/libfixmath/fract32.c
+  ./lib/libfixmath/uint32.c
 )
  
 include_directories( ${OIS_INCLUDE_DIRS}

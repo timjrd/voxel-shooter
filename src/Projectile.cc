@@ -14,7 +14,7 @@ LaserProjectile::LaserProjectile(const Ogre::ColourValue & colour)
    : Colour(colour)
 {}
 
-void LaserProjectile::Init(Model & model, const Ogre::Vector3 & pos, const Ogre::Vector3 & dir, float time)
+void LaserProjectile::Init(Model & model, const FixVector3 & pos, const FixVector3 & dir, Fix16 time)
 {
    MyModel   = &model;
    FiredFrom = pos;
@@ -34,8 +34,8 @@ void LaserProjectile::InitView(Ogre::SceneManager & sceneManager)
    projectileBbs->createBillboard(0,0,0, Ogre::ColourValue::Green);
    */
    
-   Node = SceneManager->getRootSceneNode()->createChildSceneNode(FiredFrom);
-   Node->setDirection(FiredTo);
+   Node = SceneManager->getRootSceneNode()->createChildSceneNode(FiredFrom.toVector3());
+   Node->setDirection(FiredTo.toVector3());
 
    //projectileNode->attachObject(projectileBbs);
 
@@ -51,7 +51,7 @@ void LaserProjectile::InitView(Ogre::SceneManager & sceneManager)
 
    Light = SceneManager->createLight();
    Light->setDiffuseColour(Colour);
-   setLightAttenuation(*Light, 40);
+   setLightAttenuation(*Light, 90);
    Node->attachObject(Light);
 }
 
@@ -71,16 +71,16 @@ FastProjectile::FastProjectile()
    : LaserProjectile(Ogre::ColourValue(0.1,0.1,1))
 {}
 
-bool FastProjectile::Update(float time)
+bool FastProjectile::Update(Fix16 time)
 {
-   const float velocity = 450;
-   Ogre::Vector3 pos = FiredFrom + FiredTo * (time - FiredAt)*velocity;
+   const Fix16 velocity = 450;
+   FixVector3 pos = FiredFrom + FiredTo * (time - FiredAt)*velocity;
 
-   Node->setPosition(pos);
+   Node->setPosition(pos.toVector3());
    
    if (MyModel->PointIntersects(pos))
    {
-      MyModel->SetSphere(pos.x, pos.y, pos.z, 5, false);
+      MyModel->SetSphere(pos.x.toInt(), pos.y.toInt(), pos.z.toInt(), 5, false);
       return false;
    }
    else

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "fix16.hpp"
+
 #include <OgreRoot.h>
 #include <OgreWindowEventUtilities.h>
 
@@ -21,7 +23,8 @@ private:
    OIS::Keyboard * Keyboard;
 
    Ogre::Timer Timer;
-   float       Time = 0;
+   Fix16       Time = 0;
+   Fix16       LastFrameAt = 0;
    
 public:
    void Init(OIS::Mouse &, OIS::Keyboard &);
