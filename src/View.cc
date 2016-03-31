@@ -56,7 +56,7 @@ void View::OnFrame(float time)
    NbFrame++;
 }
 
-void View::UpdateChargeur(int chargeur, int total)
+void View::UpdateCharger(int chargeur, int total)
 {
   MyCeguiView->SetStockMunitions(chargeur, total);
 }

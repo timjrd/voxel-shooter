@@ -34,41 +34,41 @@ FixQuaternion Model::Player::GetOrientation() const
 }
 
 
-void Model::Player::Decremente(Fix16 degats)
+void Model::Player::Hit(Fix16 damages)
 {
-    Vie -= degats;
-    if(GetVie() < Fix16(0))
-       Vie = Fix16(0);
+    Life -= damages;
+    if(GetLife() < Fix16(0))
+       Life = Fix16(0);
 }
 
-void Model::Player::Recharger(Model::Observer *ob)
+void Model::Player::Recharge(Model::Observer *ob)
 {
-   if(NbMunitions > 0)
+   if(Ammunitions > 0)
    {
-        int manquant = QuantiteChargeur - ChargeurEnCours;
-        if(NbMunitions <= manquant) {
-            ChargeurEnCours += NbMunitions;
-            NbMunitions = 0;
+        int manquant = ChargerCapacity - CurrentCharger;
+        if(Ammunitions <= manquant) {
+            CurrentCharger += Ammunitions;
+            Ammunitions = 0;
         }
         else
         {
-           NbMunitions -= manquant;
-           ChargeurEnCours = QuantiteChargeur;
+           Ammunitions -= manquant;
+           CurrentCharger = ChargerCapacity;
         }
-        ob->UpdateChargeur(ChargeurEnCours, NbMunitions);
+        ob->UpdateCharger(CurrentCharger, Ammunitions);
    }
 }
 
-void Model::Player::InitChargeur()
+void Model::Player::InitCharger()
 {
-    ChargeurEnCours = QuantiteChargeur;
-    NbMunitions -= QuantiteChargeur;
+    CurrentCharger = ChargerCapacity;
+    Ammunitions -= ChargerCapacity;
 
 }
 
 void Model::RechargeArmePlayer()
 {
-    MyPlayer.Recharger(MyObserver);
+    MyPlayer.Recharge(MyObserver);
 }
 
 Model::VoxelColour::VoxelColour(Random & r)
@@ -111,7 +111,7 @@ Ogre::ColourValue Model::VoxelColour::ToColourValue() const
 
 Model::Model()
 {
-    MyPlayer.InitChargeur();
+    MyPlayer.InitCharger();
 }
 Model::~Model()
 {}
@@ -124,7 +124,7 @@ Model::~Model()
 void Model::SetObserver(Observer * observer)
 {
    MyObserver = observer;
-   MyObserver->UpdateChargeur(MyPlayer.GetChargeur(), MyPlayer.GetTotalMunitions());
+   MyObserver->UpdateCharger(MyPlayer.GetCharger(), MyPlayer.GetTotalAmmunitions());
 }
 
 void Model::Tick(Fix16 time)
@@ -143,10 +143,10 @@ void Model::Tick(Fix16 time)
 
 void Model::Fire(Projectile* p, Fix16 time, bool left)
 {
-   int chargeur = MyPlayer.GetChargeur();
+   int chargeur = MyPlayer.GetCharger();
    if(chargeur > 0) {
 
-       MyPlayer.tirer();
+       MyPlayer.Shoot();
 
        FixVector3 x(1,0,0);
        if (left) x *= -Fix16(1);
@@ -154,7 +154,7 @@ void Model::Fire(Projectile* p, Fix16 time, bool left)
 
        p->Init(*this, MyPlayer.Position + x, MyPlayer.GetDirection(), time);
        MyObserver->ProjectileFired(*p);
-       MyObserver->UpdateChargeur(MyPlayer.GetChargeur(), MyPlayer.GetTotalMunitions());
+       MyObserver->UpdateCharger(MyPlayer.GetCharger(), MyPlayer.GetTotalAmmunitions());
 
        Projectiles.push_back(p);
    }

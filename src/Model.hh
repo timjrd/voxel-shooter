@@ -34,7 +34,7 @@ public:
    class Observer
    {
    public:
-      virtual void UpdateChargeur(int chargeur, int total) = 0;
+      virtual void UpdateCharger(int chargeur, int total) = 0;
       virtual void ProjectileFired(Projectile &) = 0;
       virtual void UpdatePlayer(const Ogre::Vector3 & pos, const Ogre::Quaternion & orientation) = 0;
       virtual void UpdateSize(long meshSize, long width, long height, long depth) = 0;
@@ -48,10 +48,10 @@ public:
       Fix16 YawValue   = 0;
       Fix16 PitchValue = 0;
 
-      Fix16 Vie = 100;
-      int NbMunitions = 100;
-      int QuantiteChargeur = 20;
-      int ChargeurEnCours = 0;
+      Fix16 Life = 100;
+      int Ammunitions = 100;
+      int ChargerCapacity = 20;
+      int CurrentCharger = 0;
 
    public:
       FixVector3 Position;
@@ -61,15 +61,15 @@ public:
       FixVector3    GetDirection()   const;
       FixQuaternion GetOrientation() const;
 
-      Fix16 GetVie()          { return Vie;             }
-      int GetChargeur()       { return ChargeurEnCours; }
-      int GetTotalMunitions() { return NbMunitions;     }
+      Fix16 GetLife()          { return Life;            }
+      int GetCharger()       { return CurrentCharger; }
+      int GetTotalAmmunitions() { return Ammunitions;     }
 
-      void Decremente(Fix16 degats);
+      void Hit(Fix16 damages);
 
-      void tirer()            { ChargeurEnCours--; }
-      void Recharger(Model::Observer *);
-      void InitChargeur();
+      void Shoot()            { CurrentCharger--; }
+      void Recharge(Model::Observer *);
+      void InitCharger();
    };
 
 private:
